@@ -9,3 +9,6 @@
 /rest-adapter/target/
 /shared-kernel/target/
 /spring-boot-assembly/target/
+# IDE exclude paths
+/.idea/
+/.vscode/
