@@ -107,7 +107,7 @@ class ArticleControllerTest {
                     .willReturn(Either.left(error));
 
             final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            given(apiErrorHandler.mapErrorToProblemDetail(eq(error), any(HttpServletRequest.class)))
+            given(apiErrorHandler.mapErrorToProblemDetail(eq(error)))
                     .willReturn(List.of(problemDetail));
 
             // When
@@ -117,7 +117,7 @@ class ArticleControllerTest {
             then(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
             then(response.getBody()).isInstanceOf(List.class);
             verify(commandBus).execute(any(CreateArticleCommand.class));
-            verify(apiErrorHandler).mapErrorToProblemDetail(eq(error), any(HttpServletRequest.class));
+            verify(apiErrorHandler).mapErrorToProblemDetail(eq(error));
         }
     }
 
@@ -153,7 +153,7 @@ class ArticleControllerTest {
 
             final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT.value());
             problemDetail.setDetail("Article with id [%s] is already published".formatted(ARTICLE_ID));
-            given(apiErrorHandler.mapErrorToProblemDetail(eq(error), any(HttpServletRequest.class)))
+            given(apiErrorHandler.mapErrorToProblemDetail(eq(error)))
                     .willReturn(List.of(problemDetail));
 
             // When
@@ -163,7 +163,7 @@ class ArticleControllerTest {
             then(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
             then(response.getBody()).isInstanceOf(List.class);
             verify(commandBus).execute(any(PublishArticleCommand.class));
-            verify(apiErrorHandler).mapErrorToProblemDetail(eq(error), any(HttpServletRequest.class));
+            verify(apiErrorHandler).mapErrorToProblemDetail(eq(error));
         }
 
         @Test
@@ -173,7 +173,7 @@ class ArticleControllerTest {
             final var articleRequest = new ApiRequest.PublishArticle(AUTHOR_ID, "not-a-date");
             final List<ProblemDetail> problemDetails =
                     List.of(ProblemDetail.forStatus(HttpStatus.BAD_REQUEST.value()));
-            given(apiErrorHandler.mapErrorToProblemDetail(any(Error.class), any(HttpServletRequest.class)))
+            given(apiErrorHandler.mapErrorToProblemDetail(any(Error.class)))
                     .willReturn(problemDetails);
 
             // When
@@ -219,7 +219,7 @@ class ArticleControllerTest {
 
             final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND.value());
             problemDetail.setDetail("Article with id [%s] not found".formatted(ARTICLE_ID));
-            given(apiErrorHandler.mapErrorToProblemDetail(eq(error), any(HttpServletRequest.class)))
+            given(apiErrorHandler.mapErrorToProblemDetail(eq(error)))
                     .willReturn(List.of(problemDetail));
 
             // When
@@ -229,7 +229,7 @@ class ArticleControllerTest {
             then(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
             then(response.getBody()).isInstanceOf(List.class);
             verify(queryBus).query(any(GetArticleByIdQuery.class));
-            verify(apiErrorHandler).mapErrorToProblemDetail(eq(error), any(HttpServletRequest.class));
+            verify(apiErrorHandler).mapErrorToProblemDetail(eq(error));
         }
 
         @Test
@@ -238,7 +238,7 @@ class ArticleControllerTest {
             // Given
             final List<ProblemDetail> problemDetails =
                     List.of(ProblemDetail.forStatus(HttpStatus.BAD_REQUEST.value()));
-            given(apiErrorHandler.mapErrorToProblemDetail(any(Error.class), any(HttpServletRequest.class)))
+            given(apiErrorHandler.mapErrorToProblemDetail(any(Error.class)))
                     .willReturn(problemDetails);
 
             // When

@@ -28,19 +28,18 @@ final class ApiErrorHandler {
      * Maps a WriteFlow {@link Error} to one or more RFC 7807 {@link ProblemDetail} objects.
      *
      * @param error the error value to map
-     * @param request the originating HTTP request
      * @return the list of problem details (one per leaf error)
      */
-    List<ProblemDetail> mapErrorToProblemDetail(final Error error, final HttpServletRequest request) {
+    List<ProblemDetail> mapErrorToProblemDetail(final Error error) {
         return switch (error) {
             case Error.ValidationErrors validationErrors ->
                     List.of(this.createProblemDetailFromValidationErrors(validationErrors));
             case Error.MultipleErrors multipleErrors ->
-                    this.createProblemDetailFromMultipleErrors(multipleErrors, request);
+                    this.createProblemDetailFromMultipleErrors(multipleErrors);
             case Error.BusinessError businessError ->
                     List.of(this.createProblemDetailFromBusinessError(businessError));
             case Error.TechnicalError technicalError ->
-                    List.of(this.createProblemDetailFromTechnicalError(technicalError, request));
+                    List.of(this.createProblemDetailFromTechnicalError(technicalError));
         };
     }
 
@@ -67,19 +66,18 @@ final class ApiErrorHandler {
         };
     }
 
-    private ProblemDetail createProblemDetailFromTechnicalError(final Error.TechnicalError technicalError,
-                                                                final HttpServletRequest request) {
+    private ProblemDetail createProblemDetailFromTechnicalError(final Error.TechnicalError technicalError) {
         log.atTrace().setMessage("Technical error received").log();
         return switch (technicalError) {
             case Error.TechnicalError.PersistenceError persistenceError -> {
                 final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-                problemDetail.setInstance(URI.create(request.getRequestURI()));
+                problemDetail.setInstance(URI.create(persistenceError.origin()));
                 problemDetail.setDetail("Internal server error [%s]".formatted(persistenceError.message()));
                 yield problemDetail;
             }
             case Error.TechnicalError.SomethingWentWrong somethingWentWrong -> {
                 final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-                problemDetail.setInstance(URI.create(request.getRequestURI()));
+                problemDetail.setInstance(URI.create(somethingWentWrong.origin()));
                 problemDetail.setDetail("Internal server error [%s]".formatted(somethingWentWrong.message()));
                 yield problemDetail;
             }
@@ -108,11 +106,10 @@ final class ApiErrorHandler {
         };
     }
 
-    private List<ProblemDetail> createProblemDetailFromMultipleErrors(final Error.MultipleErrors multipleErrors,
-                                                                      final HttpServletRequest request) {
+    private List<ProblemDetail> createProblemDetailFromMultipleErrors(final Error.MultipleErrors multipleErrors) {
         log.atTrace().setMessage("Multiple errors received").log();
         return multipleErrors.errors().stream()
-                .map(e -> this.mapErrorToProblemDetail(e, request))
+                .map(this::mapErrorToProblemDetail)
                 .flatMap(List::stream)
                 .toList();
     }

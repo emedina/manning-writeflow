@@ -29,19 +29,25 @@ import lombok.experimental.Accessors;
  *
  * @author Enrique Medina Montenegro
  */
-@Getter
 @Accessors(fluent = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Article {
 
+    @Getter
     @EqualsAndHashCode.Include
     private final ArticleId id;
 
+    @Getter
     private final Title title;
+    @Getter
     private final Content content;
+    @Getter
     private final AuthorId authorId;
+    @Getter
     private ArticleStatus status;
+
+    // No getter to avoid direct manipulation of the collection.
     private final List<DomainEvent> domainEvents;
 
     /**

@@ -45,7 +45,7 @@ public class NotifySubscribersListener {
         NotifySubscribersCommand.validateThenCreate(
                 event.articleId(),
                 event.authorId())
-            .flatMap(commandBus::execute)
+            .flatMap(this.commandBus::execute)
             .peekLeft(error -> log.warn("Failed to notify subscribers for article [{}]: {}",
                 event.articleId(), error));
     }

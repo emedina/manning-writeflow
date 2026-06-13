@@ -28,13 +28,10 @@ import jakarta.servlet.http.HttpServletRequest;
 class ApiErrorHandlerTest {
 
     private ApiErrorHandler apiErrorHandler;
-    private HttpServletRequest mockRequest;
 
     @BeforeEach
     void setUp() {
         this.apiErrorHandler = new ApiErrorHandler();
-        this.mockRequest = mock(HttpServletRequest.class);
-        given(this.mockRequest.getRequestURI()).willReturn("/api/articles/test");
     }
 
     @Nested
@@ -48,7 +45,7 @@ class ApiErrorHandlerTest {
             final var error = new Error.ValidationErrors(List.of(new ValidationError.Mandatory("authorId")));
 
             // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error, mockRequest);
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
 
             // Then
             then(result).hasSize(1);
@@ -66,7 +63,7 @@ class ApiErrorHandlerTest {
                     new ValidationError.CannotBeEmpty("tags", List.of())));
 
             // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error, mockRequest);
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
 
             // Then
             then(result).hasSize(1);
@@ -88,7 +85,7 @@ class ApiErrorHandlerTest {
             final var error = new Error.BusinessError.NotFound("JpaArticleRepository", "Article", "id-1");
 
             // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error, mockRequest);
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
 
             // Then
             then(result).hasSize(1);
@@ -103,7 +100,7 @@ class ApiErrorHandlerTest {
             final var error = new Error.BusinessError.ArticleAlreadyPublished("id-1");
 
             // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error, mockRequest);
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
 
             // Then
             then(result).hasSize(1);
@@ -118,7 +115,7 @@ class ApiErrorHandlerTest {
             final var error = new Error.BusinessError.AuthorNotAllowedToPublish("author-1", "id-1");
 
             // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error, mockRequest);
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
 
             // Then
             then(result).hasSize(1);
@@ -138,13 +135,13 @@ class ApiErrorHandlerTest {
             final var error = new Error.TechnicalError.PersistenceError("JpaArticleRepository", "save", "boom");
 
             // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error, mockRequest);
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
 
             // Then
             then(result).hasSize(1);
             then(result.get(0).getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
             then(result.get(0).getDetail()).isEqualTo("Internal server error [boom]");
-            then(result.get(0).getInstance()).isEqualTo(URI.create("/api/articles/test"));
+            then(result.get(0).getInstance()).isEqualTo(URI.create("JpaArticleRepository"));
         }
 
         @Test
@@ -154,7 +151,7 @@ class ApiErrorHandlerTest {
             final var error = new Error.TechnicalError.SomethingWentWrong("origin", "oops");
 
             // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error, mockRequest);
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
 
             // Then
             then(result).hasSize(1);
@@ -176,7 +173,7 @@ class ApiErrorHandlerTest {
             final var error = new Error.MultipleErrors(List.of(businessError, technicalError));
 
             // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error, mockRequest);
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
 
             // Then
             then(result).hasSize(2);

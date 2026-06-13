@@ -47,7 +47,7 @@ public class RecordIntegrationEventListener {
                 event.articleId(),
                 event.authorId(),
                 event.publishedAt())
-            .flatMap(commandBus::execute)
+            .flatMap(this.commandBus::execute)
             .peekLeft(error -> log.warn("Failed to record integration event for article [{}]: {}",
                 event.articleId(), error));
     }

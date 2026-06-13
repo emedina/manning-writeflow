@@ -65,9 +65,7 @@ class OutboxIntegrationEventPublisher implements IntegrationEventPublisherOutput
             this.springOutboxRepository.save(message);
 
             return Either.right(null);
-        } catch (final JacksonException e) {
-            return Either.left(new Error.TechnicalError.PersistenceError(ORIGIN, "publish", e.getMessage()));
-        } catch (final DataAccessException e) {
+        } catch (final JacksonException | DataAccessException e) {
             return Either.left(new Error.TechnicalError.PersistenceError(ORIGIN, "publish", e.getMessage()));
         }
     }

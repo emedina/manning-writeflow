@@ -44,11 +44,11 @@ class PublishArticleHandler implements PublishArticleUseCase {
     public Either<Error, Void> handle(final PublishArticleCommand command) {
         return ArticleId.validateThenCreate(command.articleId())
             .flatMap(articleId -> AuthorId.validateThenCreate(command.authorId())
-                .<Void>flatMap(authorId -> this.articleRepository.readById(articleId)
+                .flatMap(authorId -> this.articleRepository.readById(articleId)
                     .flatMap(article -> article.publish(authorId))
-                    .flatMap(article -> this.articleRepository.save(article).map(ignored -> article))
+                    .flatMap(article -> this.articleRepository.save(article).map(_ -> article))
                     .peek(article -> this.domainEventPublisher.publish(article.popDomainEvents()))
-                    .map(article -> null)));
+                    .map(_ -> null)));
     }
 
 }

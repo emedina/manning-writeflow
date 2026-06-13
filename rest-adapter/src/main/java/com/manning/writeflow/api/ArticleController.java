@@ -54,10 +54,11 @@ final class ArticleController implements ArticleApi {
         final String articleId = UUID.randomUUID().toString();
         return CreateArticleCommand.validateThenCreate(articleId, articleRequest.authorId(),
                         articleRequest.title(), articleRequest.content())
-                .flatMap(this.commandBus::<Error, CreateArticleCommand>execute)
-                .mapLeft(e -> this.apiErrorHandler.mapErrorToProblemDetail(e, request))
-                .fold(lpd -> ApiResultUtils.createFailureResponse(lpd, URI.create(request.getRequestURI())),
-                        v -> ApiResultUtils.createSuccessResponse(HttpStatus.CREATED,
+                .flatMap(this.commandBus::execute)
+                .mapLeft(this.apiErrorHandler::mapErrorToProblemDetail)
+                .fold(
+                    failure -> ApiResultUtils.createFailureResponse(failure, URI.create(request.getRequestURI())),
+                        _ -> ApiResultUtils.createSuccessResponse(HttpStatus.CREATED,
                                 new ApiResponse.Article(articleId, articleRequest.title(),
                                         articleRequest.authorId(), "DRAFT")));
     }
@@ -72,10 +73,11 @@ final class ArticleController implements ArticleApi {
         return this.parsePublicationDate(articleRequest.publicationDate())
                 .flatMap(publicationDate -> PublishArticleCommand.validateThenCreate(articleId,
                         articleRequest.authorId(), publicationDate))
-                .flatMap(this.commandBus::<Error, PublishArticleCommand>execute)
-                .mapLeft(e -> this.apiErrorHandler.mapErrorToProblemDetail(e, request))
-                .fold(lpd -> ApiResultUtils.createFailureResponse(lpd, URI.create(request.getRequestURI())),
-                        v -> ApiResultUtils.createSuccessResponse(HttpStatus.NO_CONTENT, null));
+                .flatMap(this.commandBus::execute)
+                .mapLeft(this.apiErrorHandler::mapErrorToProblemDetail)
+                .fold(
+                    failure -> ApiResultUtils.createFailureResponse(failure, URI.create(request.getRequestURI())),
+                        _ -> ApiResultUtils.createSuccessResponse(HttpStatus.NO_CONTENT, null));
     }
 
     /**
@@ -86,10 +88,11 @@ final class ArticleController implements ArticleApi {
             final HttpServletRequest request) {
         return GetArticleByIdQuery.validateThenCreate(articleId)
                 .flatMap(this.queryBus::<Error, ArticleDTO, GetArticleByIdQuery>query)
-                .mapLeft(e -> this.apiErrorHandler.mapErrorToProblemDetail(e, request))
-                .fold(lpd -> ApiResultUtils.createFailureResponse(lpd, URI.create(request.getRequestURI())),
-                        a -> ApiResultUtils.createSuccessResponse(HttpStatus.OK,
-                                ApiMapper.INSTANCE.toArticleResponse(a)));
+                .mapLeft(this.apiErrorHandler::mapErrorToProblemDetail)
+                .fold(
+                    failure -> ApiResultUtils.createFailureResponse(failure, URI.create(request.getRequestURI())),
+                        success -> ApiResultUtils.createSuccessResponse(HttpStatus.OK,
+                                ApiMapper.INSTANCE.toArticleResponse(success)));
     }
 
     /**
