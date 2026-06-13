@@ -1,0 +1,8 @@
+Class <com.manning.writeflow.application.ports.in.CreateArticleUseCase> is annotated with @UseCase in (CreateArticleUseCase.java:0)
+Class <com.manning.writeflow.application.ports.in.GetArticleByIdUseCase> is annotated with @UseCase in (GetArticleByIdUseCase.java:0)
+Class <com.manning.writeflow.application.ports.in.NotifySubscribersUseCase> is annotated with @UseCase in (NotifySubscribersUseCase.java:0)
+Class <com.manning.writeflow.application.ports.in.PublishArticleUseCase> is annotated with @UseCase in (PublishArticleUseCase.java:0)
+Class <com.manning.writeflow.application.ports.in.RecordIntegrationEventUseCase> is annotated with @UseCase in (RecordIntegrationEventUseCase.java:0)
+Class <com.manning.writeflow.application.ports.out.DomainEventPublisherOutputPort> is annotated with @OutputPort in (DomainEventPublisherOutputPort.java:0)
+Class <com.manning.writeflow.application.ports.out.IntegrationEventPublisherOutputPort> is annotated with @OutputPort in (IntegrationEventPublisherOutputPort.java:0)
+Class <com.manning.writeflow.application.ports.out.NotificationOutputPort> is annotated with @OutputPort in (NotificationOutputPort.java:0)

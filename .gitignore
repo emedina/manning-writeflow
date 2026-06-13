@@ -1,0 +1,11 @@
+# Project exclude paths
+/application-core/application/target/
+/application-core/domain/target/
+/application-core/input-ports/target/
+/application-core/output-ports/target/
+/event-listener-adapter/target/
+/notification-adapter/target/
+/persistence-adapter/target/
+/rest-adapter/target/
+/shared-kernel/target/
+/spring-boot-assembly/target/

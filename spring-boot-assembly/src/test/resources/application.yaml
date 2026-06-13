@@ -1,0 +1,113 @@
+# Configuration for the hexagonal architecture tests
+spring:
+  cloud:
+    config:
+      enabled: false
+
+hexagonal:
+  architecture:
+    shared-kernel:
+      fqdns:
+        - com.manning.writeflow.shared..
+      allowed-libraries:
+        - java..
+        - javax..
+        - jakarta..
+        - lombok..
+        - io.vavr..
+        - org.slf4j..
+        - org.apache.commons..
+    domain:
+      fqdns:
+        - com.manning.writeflow.domain..
+      allowed-libraries:
+        - java..
+        - javax..
+        - jakarta..
+        - lombok..
+        - io.vavr..
+        - org.slf4j..
+        - org.apache.commons..
+        - com.emedina..
+        - com.manning.writeflow.shared..
+    output-ports:
+      fqdns:
+        - com.manning.writeflow.application.ports.out..
+      allowed-libraries:
+        - java..
+        - javax..
+        - jakarta..
+        - lombok..
+        - io.vavr..
+        - org.slf4j..
+        - org.apache.commons..
+        - com.emedina..
+        - com.manning.writeflow.shared..
+        - com.manning.writeflow.domain..
+    input-ports:
+      fqdns:
+        - com.manning.writeflow.application.ports.in..
+      allowed-libraries:
+        - java..
+        - javax..
+        - jakarta..
+        - lombok..
+        - io.vavr..
+        - org.slf4j..
+        - org.apache.commons..
+        - com.emedina..
+        - com.manning.writeflow.shared..
+        - com.manning.writeflow.application.command..
+        - com.manning.writeflow.application.query..
+    command:
+      fqdns:
+        - com.manning.writeflow.application.command..
+      allowed-libraries:
+        - java..
+        - javax..
+        - jakarta..
+        - lombok..
+        - io.vavr..
+        - org.slf4j..
+        - org.apache.commons..
+        - com.emedina..
+        - com.manning.writeflow.shared..
+        - com.manning.writeflow.domain..
+    query:
+      fqdns:
+        - com.manning.writeflow.application.query..
+      allowed-libraries:
+        - java..
+        - javax..
+        - jakarta..
+        - lombok..
+        - io.vavr..
+        - org.slf4j..
+        - org.apache.commons..
+        - com.emedina..
+        - com.manning.writeflow.shared..
+    handler:
+      fqdns:
+        - com.manning.writeflow.application..
+      allowed-libraries:
+        - java..
+        - javax..
+        - jakarta..
+        - lombok..
+        - org.slf4j..
+        - io.vavr..
+        - org.apache.commons..
+        - org.mapstruct..
+        - com.emedina..
+        - com.manning.writeflow.shared..
+        - com.manning.writeflow.application.ports.out..
+        - com.manning.writeflow.application.ports.in..
+        - com.manning.writeflow.application.command..
+        - com.manning.writeflow.application.query..
+        - com.manning.writeflow.domain..
+    adapters:
+      fqdns:
+        - com.manning.writeflow.api..
+        - com.manning.writeflow.repositories..
+        - com.manning.writeflow.events..
+        - com.manning.writeflow.external..

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.manning.writeflow</groupId>
+        <artifactId>writeflow</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <name>WriteFlow - Event Listener Adapter</name>
+    <artifactId>writeflow-event-listener-adapter</artifactId>
+
+    <properties>
+        <shared-kernel-domain.version>1.0.0</shared-kernel-domain.version>
+        <shared-kernel-command-either-bus.version>1.0.0</shared-kernel-command-either-bus.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot BOM so that spring-tx/spring-context are SB-managed -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- WriteFlow application-core: input ports supply the commands to dispatch -->
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-application-core-input-ports</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- WriteFlow application-core: domain supplies the ArticlePublished event type -->
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-application-core-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- WriteFlow shared kernel: Error type -->
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-shared-kernel</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Architecture Kernel: CommandBus + @Adapter stereotype -->
+        <dependency>
+            <groupId>io.github.emedina</groupId>
+            <artifactId>shared-kernel-command-either-bus</artifactId>
+            <version>${shared-kernel-command-either-bus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.emedina</groupId>
+            <artifactId>shared-kernel-domain</artifactId>
+            <version>${shared-kernel-domain.version}</version>
+        </dependency>
+
+        <!-- Spring: @TransactionalEventListener (spring-tx) + stereotype/context -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- Functional error handling -->
+        <dependency>
+            <groupId>io.vavr</groupId>
+            <artifactId>vavr</artifactId>
+            <version>${vavr.version}</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit-jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

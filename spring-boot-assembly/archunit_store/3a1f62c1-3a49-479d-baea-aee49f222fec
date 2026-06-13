@@ -1,0 +1,1 @@
+Class com.manning.writeflow.application.ports.in.GetArticleByIdUseCase has a generic type ArticleDTO at position 2 that is not assignable to Query

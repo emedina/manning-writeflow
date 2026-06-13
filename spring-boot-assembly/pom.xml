@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.manning.writeflow</groupId>
+        <artifactId>writeflow</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <name>WriteFlow - Spring Boot Assembly</name>
+    <artifactId>writeflow-spring-boot-assembly</artifactId>
+
+    <properties>
+        <query-either-bus-spring-boot.version>1.0.0</query-either-bus-spring-boot.version>
+        <command-either-bus-spring-boot.version>1.0.0</command-either-bus-spring-boot.version>
+        <transactional-either-spring-boot.version>1.0.0</transactional-either-spring-boot.version>
+        <archunit-hexagonal.version>1.0.0</archunit-hexagonal.version>
+
+        <!-- Skip JaCoCo coverage for this module (assembly module with architecture tests) -->
+        <jacoco.skip>true</jacoco.skip>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <!-- Import dependency management from Spring Boot -->
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- Spring Boot dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- WriteFlow adapter and application modules -->
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-rest-adapter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-persistence-adapter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-event-listener-adapter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-notification-adapter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-application-core-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Architecture Kernel Spring Boot starters (bus + transactional bridge) -->
+        <dependency>
+            <groupId>io.github.emedina</groupId>
+            <artifactId>command-either-bus-spring-boot</artifactId>
+            <version>${command-either-bus-spring-boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.emedina</groupId>
+            <artifactId>query-either-bus-spring-boot</artifactId>
+            <version>${query-either-bus-spring-boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.emedina</groupId>
+            <artifactId>transactional-either-spring-boot</artifactId>
+            <version>${transactional-either-spring-boot.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring-boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.emedina</groupId>
+            <artifactId>archunit-hexagonal</artifactId>
+            <version>${archunit-hexagonal.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>false</filtering>
+            </testResource>
+        </testResources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <proc>${maven.compiler.proc}</proc>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

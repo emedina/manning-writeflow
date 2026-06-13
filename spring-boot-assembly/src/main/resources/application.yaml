@@ -1,0 +1,47 @@
+# WriteFlow application configuration
+spring:
+  application:
+    name: writeflow
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: jdbc:h2:mem:writeflowdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+
+server:
+  port: 8086
+  max-http-request-header-size: 16KB
+  servlet:
+    context-path: /
+  forward-headers-strategy: FRAMEWORK
+
+management:
+  security:
+    enabled: false
+  health:
+    vault:
+      enabled: false
+    redis:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+    health:
+      show-details: always
+      show-components: always
+
+logging:
+  level:
+    com.manning.writeflow.api: TRACE
