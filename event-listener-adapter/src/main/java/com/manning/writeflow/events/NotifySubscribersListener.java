@@ -1,15 +1,13 @@
 package com.manning.writeflow.events;
 
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
-
-import com.manning.writeflow.application.command.NotifySubscribersCommand;
-import com.manning.writeflow.shared.event.ArticlePublished;
 import com.emedina.sharedkernel.application.annotation.Adapter;
 import com.emedina.sharedkernel.command.core.CommandBus;
-
+import com.manning.writeflow.application.command.NotifySubscribersCommand;
+import com.manning.writeflow.shared.event.ArticlePublished;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Event-listener adapter that reacts to the {@link ArticlePublished} domain event by notifying the
@@ -38,7 +36,7 @@ public class NotifySubscribersListener {
     /**
      * Handles the {@link ArticlePublished} domain event after the surrounding transaction commits.
      *
-     * @param event the domain event signalling that an article has been published
+     * @param event the domain event signaling that an article has been published
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(final ArticlePublished event) {

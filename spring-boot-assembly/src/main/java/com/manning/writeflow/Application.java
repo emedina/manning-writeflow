@@ -8,7 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *
  * @author Enrique Medina Montenegro
  */
-@SpringBootApplication(proxyBeanMethods = false, scanBasePackages = "com.manning.writeflow")
+@SpringBootApplication(
+    proxyBeanMethods = false, scanBasePackages = { "com.manning.writeflow", "com.emedina.transactional" }
+)
 public class Application {
 
     public static void main(final String[] args) {

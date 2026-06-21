@@ -40,7 +40,7 @@ class PublishArticleHandler implements PublishArticleUseCase {
      * @return {@link Either#right} with {@code null} on success, otherwise {@link Either#left} with the error
      */
     @Override
-    @Transactional
+    @Transactional(rollbackForClassNameWithEither = { "com.manning.writeflow.shared.error.Error" })
     public Either<Error, Void> handle(final PublishArticleCommand command) {
         return ArticleId.validateThenCreate(command.articleId())
             .flatMap(articleId -> AuthorId.validateThenCreate(command.authorId())

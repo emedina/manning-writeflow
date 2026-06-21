@@ -35,7 +35,7 @@ class GetArticleByIdHandler implements GetArticleByIdUseCase {
      * @return {@link Either#right} with the article DTO, otherwise {@link Either#left} with the error
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(rollbackForClassNameWithEither = { "com.manning.writeflow.shared.error.Error" }, readOnly = true)
     public Either<Error, ArticleDTO> handle(final GetArticleByIdQuery query) {
         return ArticleId.validateThenCreate(query.articleId())
             .flatMap(this.articleRepository::findById);
