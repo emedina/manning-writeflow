@@ -5,9 +5,8 @@ import com.emedina.sharedkernel.transactional.Transactional;
 import com.manning.writeflow.application.command.RecordIntegrationEventCommand;
 import com.manning.writeflow.application.ports.in.RecordIntegrationEventUseCase;
 import com.manning.writeflow.application.ports.out.IntegrationEventPublisherOutputPort;
-import com.manning.writeflow.shared.event.ArticlePublished;
 import com.manning.writeflow.shared.error.Error;
-
+import com.manning.writeflow.shared.event.ArticlePublished;
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 
@@ -35,7 +34,7 @@ class RecordIntegrationEventHandler implements RecordIntegrationEventUseCase {
      * @return {@link Either#right} with {@code null} on success, otherwise {@link Either#left} with the error
      */
     @Override
-    @Transactional
+    @Transactional(rollbackForClassNameWithEither = { "com.manning.writeflow.shared.error.Error" })
     public Either<Error, Void> handle(final RecordIntegrationEventCommand command) {
         final ArticlePublished event = new ArticlePublished(
             command.articleId(), command.authorId(), command.publishedAt());

@@ -36,7 +36,7 @@ class NotifySubscribersHandler implements NotifySubscribersUseCase {
      * @return {@link Either#right} with {@code null} on success, otherwise {@link Either#left} with the error
      */
     @Override
-    @Transactional
+    @Transactional(rollbackForClassNameWithEither = { "com.manning.writeflow.shared.error.Error" })
     public Either<Error, Void> handle(final NotifySubscribersCommand command) {
         return this.notificationOutputPort.notify(
             new NotificationTextDTO("An article you follow has just been published"),

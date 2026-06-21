@@ -4,14 +4,9 @@ import com.emedina.sharedkernel.application.annotation.ApplicationService;
 import com.emedina.sharedkernel.transactional.Transactional;
 import com.manning.writeflow.application.command.CreateArticleCommand;
 import com.manning.writeflow.application.ports.in.CreateArticleUseCase;
-import com.manning.writeflow.domain.entities.Article;
-import com.manning.writeflow.domain.entities.ArticleId;
-import com.manning.writeflow.domain.entities.AuthorId;
-import com.manning.writeflow.domain.entities.Content;
-import com.manning.writeflow.domain.entities.Title;
+import com.manning.writeflow.domain.entities.*;
 import com.manning.writeflow.domain.repositories.ArticleRepository;
 import com.manning.writeflow.shared.error.Error;
-
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 
@@ -41,7 +36,7 @@ class CreateArticleHandler implements CreateArticleUseCase {
      * @return {@link Either#right} with {@code null} on success, otherwise {@link Either#left} with the error
      */
     @Override
-    @Transactional
+    @Transactional(rollbackForClassNameWithEither = { "com.manning.writeflow.shared.error.Error" })
     public Either<Error, Void> handle(final CreateArticleCommand command) {
         return ArticleId.validateThenCreate(command.articleId())
             .flatMap(articleId -> AuthorId.validateThenCreate(command.authorId())

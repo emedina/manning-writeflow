@@ -98,6 +98,10 @@
             <artifactId>transactional-either-spring-boot</artifactId>
             <version>${transactional-either-spring-boot.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-h2console</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
