@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,8 +49,9 @@ class PublishArticleHandlerTest {
     private PublishArticleHandler handler;
 
     @Test
-    void shouldPublishArticle_whenDraftBelongsToRequestingAuthor() {
-        // given
+    @DisplayName("handle should publish the article when the draft belongs to the requesting author")
+    void handleShouldPublishArticleWhenDraftBelongsToRequestingAuthor() {
+        //given
         final ArticleId articleId = ArticleId.validateThenCreate(ARTICLE_ID).get();
         final AuthorId authorId = AuthorId.validateThenCreate(AUTHOR_ID).get();
         final Article draft = draftArticle(articleId, authorId);
@@ -58,19 +60,21 @@ class PublishArticleHandlerTest {
         given(this.command.authorId()).willReturn(AUTHOR_ID);
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(draft));
         given(this.articleRepository.save(draft)).willReturn(Either.right(null));
+        given(this.domainEventPublisher.publish(org.mockito.ArgumentMatchers.anyList())).willReturn(Either.right(null));
 
-        // when
+        //when
         final Either<Error, Void> result = this.handler.handle(this.command);
 
-        // then
+        //then
         then(result.isRight()).isTrue();
         verify(this.articleRepository).save(draft);
         verify(this.domainEventPublisher).publish(org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
-    void shouldReturnNotFound_whenArticleDoesNotExist() {
-        // given
+    @DisplayName("handle should return not found when the article does not exist")
+    void handleShouldReturnNotFoundWhenArticleDoesNotExist() {
+        //given
         final ArticleId articleId = ArticleId.validateThenCreate(ARTICLE_ID).get();
         final Error.BusinessError.NotFound notFound =
             new Error.BusinessError.NotFound("JpaArticleRepository", "Article", ARTICLE_ID);
@@ -79,10 +83,10 @@ class PublishArticleHandlerTest {
         given(this.command.authorId()).willReturn(AUTHOR_ID);
         given(this.articleRepository.readById(articleId)).willReturn(Either.left(notFound));
 
-        // when
+        //when
         final Either<Error, Void> result = this.handler.handle(this.command);
 
-        // then
+        //then
         then(result.isLeft()).isTrue();
         then(result.getLeft()).isEqualTo(notFound);
         verify(this.articleRepository, never()).save(org.mockito.ArgumentMatchers.any());
@@ -90,8 +94,9 @@ class PublishArticleHandlerTest {
     }
 
     @Test
-    void shouldReturnAlreadyPublished_whenArticleIsNotDraft() {
-        // given
+    @DisplayName("handle should return already published when the article is not a draft")
+    void handleShouldReturnAlreadyPublishedWhenArticleIsNotDraft() {
+        //given
         final ArticleId articleId = ArticleId.validateThenCreate(ARTICLE_ID).get();
         final AuthorId authorId = AuthorId.validateThenCreate(AUTHOR_ID).get();
         final Article published = draftArticle(articleId, authorId);
@@ -101,10 +106,10 @@ class PublishArticleHandlerTest {
         given(this.command.authorId()).willReturn(AUTHOR_ID);
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(published));
 
-        // when
+        //when
         final Either<Error, Void> result = this.handler.handle(this.command);
 
-        // then
+        //then
         then(result.isLeft()).isTrue();
         then(result.getLeft()).isInstanceOf(Error.BusinessError.ArticleAlreadyPublished.class);
         verify(this.articleRepository, never()).save(org.mockito.ArgumentMatchers.any());
@@ -112,8 +117,9 @@ class PublishArticleHandlerTest {
     }
 
     @Test
-    void shouldReturnAuthorNotAllowed_whenRequestingAuthorIsNotTheOwner() {
-        // given
+    @DisplayName("handle should reject publishing when the requesting author is not the owner")
+    void handleShouldRejectPublishingWhenRequestingAuthorIsNotOwner() {
+        //given
         final ArticleId articleId = ArticleId.validateThenCreate(ARTICLE_ID).get();
         final AuthorId owner = AuthorId.validateThenCreate(AUTHOR_ID).get();
         final Article draft = draftArticle(articleId, owner);
@@ -122,10 +128,10 @@ class PublishArticleHandlerTest {
         given(this.command.authorId()).willReturn(OTHER_AUTHOR_ID);
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(draft));
 
-        // when
+        //when
         final Either<Error, Void> result = this.handler.handle(this.command);
 
-        // then
+        //then
         then(result.isLeft()).isTrue();
         then(result.getLeft()).isInstanceOf(Error.BusinessError.AuthorNotAllowedToPublish.class);
         verify(this.articleRepository, never()).save(org.mockito.ArgumentMatchers.any());
@@ -133,8 +139,9 @@ class PublishArticleHandlerTest {
     }
 
     @Test
-    void shouldReturnPersistenceError_whenSaveFails() {
-        // given
+    @DisplayName("handle should return the persistence error when saving fails")
+    void handleShouldReturnPersistenceErrorWhenSaveFails() {
+        //given
         final ArticleId articleId = ArticleId.validateThenCreate(ARTICLE_ID).get();
         final AuthorId authorId = AuthorId.validateThenCreate(AUTHOR_ID).get();
         final Article draft = draftArticle(articleId, authorId);
@@ -146,13 +153,40 @@ class PublishArticleHandlerTest {
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(draft));
         given(this.articleRepository.save(draft)).willReturn(Either.left(persistenceError));
 
-        // when
+        //when
         final Either<Error, Void> result = this.handler.handle(this.command);
 
-        // then
+        //then
         then(result.isLeft()).isTrue();
         then(result.getLeft()).isEqualTo(persistenceError);
         verify(this.domainEventPublisher, never()).publish(org.mockito.ArgumentMatchers.anyList());
+    }
+
+    @Test
+    @DisplayName("handle should return the publisher error when publishing domain events fails")
+    void handleShouldReturnPublisherErrorWhenPublishingDomainEventsFails() {
+        //given
+        final ArticleId articleId = ArticleId.validateThenCreate(ARTICLE_ID).get();
+        final AuthorId authorId = AuthorId.validateThenCreate(AUTHOR_ID).get();
+        final Article draft = draftArticle(articleId, authorId);
+        final Error.TechnicalError.SomethingWentWrong publisherError =
+            new Error.TechnicalError.SomethingWentWrong("SpringDomainEventPublisher", "dispatch failed");
+
+        given(this.command.articleId()).willReturn(ARTICLE_ID);
+        given(this.command.authorId()).willReturn(AUTHOR_ID);
+        given(this.articleRepository.readById(articleId)).willReturn(Either.right(draft));
+        given(this.articleRepository.save(draft)).willReturn(Either.right(null));
+        given(this.domainEventPublisher.publish(org.mockito.ArgumentMatchers.anyList()))
+            .willReturn(Either.left(publisherError));
+
+        //when
+        final Either<Error, Void> result = this.handler.handle(this.command);
+
+        //then
+        then(result.isLeft()).isTrue();
+        then(result.getLeft()).isEqualTo(publisherError);
+        verify(this.articleRepository).save(draft);
+        verify(this.domainEventPublisher).publish(org.mockito.ArgumentMatchers.anyList());
     }
 
     private static Article draftArticle(final ArticleId articleId, final AuthorId authorId) {
