@@ -1,17 +1,16 @@
 package com.manning.writeflow.domain.entities;
 
-import static org.assertj.core.api.BDDAssertions.then;
+import com.manning.writeflow.shared.error.Error;
+import com.manning.writeflow.shared.event.ArticlePublished;
+import com.manning.writeflow.shared.event.DomainEvent;
+import io.vavr.control.Either;
+import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.Test;
-
-import com.manning.writeflow.shared.event.ArticlePublished;
-import com.manning.writeflow.shared.event.DomainEvent;
-import com.manning.writeflow.shared.error.Error;
-
-import io.vavr.control.Either;
+import static org.assertj.core.api.BDDAssertions.then;
 
 /**
  * Unit tests for {@link Article}.
@@ -80,7 +79,7 @@ class ArticleTest {
             Article.validateThenCreate(articleId(), title(), content(), author).get();
 
         // when
-        final Either<Error, Article> result = article.publish(author);
+        final Either<Error, Article> result = article.publish(author, Instant.now());
 
         // then
         then(result.isRight()).isTrue();
@@ -95,7 +94,7 @@ class ArticleTest {
         final Article article = Article.validateThenCreate(id, title(), content(), author).get();
 
         // when
-        article.publish(author);
+        article.publish(author, Instant.now());
         final List<DomainEvent> events = article.popDomainEvents();
 
         // then
@@ -113,7 +112,7 @@ class ArticleTest {
         final AuthorId author = authorId();
         final Article article =
             Article.validateThenCreate(articleId(), title(), content(), author).get();
-        article.publish(author);
+        article.publish(author, Instant.now());
 
         // when
         final List<DomainEvent> first = article.popDomainEvents();
@@ -130,11 +129,11 @@ class ArticleTest {
         final AuthorId author = authorId();
         final ArticleId id = articleId();
         final Article article = Article.validateThenCreate(id, title(), content(), author).get();
-        article.publish(author);
+        article.publish(author, Instant.now());
         article.popDomainEvents();
 
         // when
-        final Either<Error, Article> result = article.publish(author);
+        final Either<Error, Article> result = article.publish(author, Instant.now());
 
         // then
         then(result.isLeft()).isTrue();
@@ -153,7 +152,7 @@ class ArticleTest {
         final Article article = Article.validateThenCreate(id, title(), content(), owner).get();
 
         // when
-        final Either<Error, Article> result = article.publish(intruder);
+        final Either<Error, Article> result = article.publish(intruder, Instant.now());
 
         // then
         then(result.isLeft()).isTrue();

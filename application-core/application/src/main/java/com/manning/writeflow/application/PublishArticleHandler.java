@@ -18,10 +18,9 @@ import lombok.RequiredArgsConstructor;
  * Orchestration logic for the use case to publish an existing draft article.
  *
  * <p>The command carries primitives only, so the handler first re-parses the raw identifiers
- * into their typed value objects, reads the target article, delegates the publication decision
- * to the {@link Article} aggregate, persists the resulting state and finally drains and publishes
- * the domain events raised by the aggregate. Every step is chained over {@link Either} so
- * that any failure short-circuits the remainder of the pipeline.</p>
+ * into their typed value objects, reads the target article, delegates the publication decision to the {@link Article}
+ * aggregate, persists the resulting state and finally drains and publishes the domain events raised by the aggregate.
+ * Every step is chained over {@link Either} so that any failure short-circuits the remainder of the pipeline.</p>
  *
  * @author Enrique Medina Montenegro
  * @see ApplicationService
@@ -45,7 +44,7 @@ class PublishArticleHandler implements PublishArticleUseCase {
         return ArticleId.validateThenCreate(command.articleId())
             .flatMap(articleId -> AuthorId.validateThenCreate(command.authorId())
                 .flatMap(authorId -> this.articleRepository.readById(articleId)
-                    .flatMap(article -> article.publish(authorId)
+                    .flatMap(article -> article.publish(authorId, command.publicationDate())
                         .flatMap(this.articleRepository::save)
                         .flatMap(_ -> this.domainEventPublisher.publish(article.popDomainEvents()))
                     )

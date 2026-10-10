@@ -1,10 +1,11 @@
 package com.manning.writeflow.application;
 
-import static org.assertj.core.api.BDDAssertions.then;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
+import com.manning.writeflow.application.command.PublishArticleCommand;
+import com.manning.writeflow.application.ports.out.DomainEventPublisherOutputPort;
+import com.manning.writeflow.domain.entities.*;
+import com.manning.writeflow.domain.repositories.ArticleRepository;
+import com.manning.writeflow.shared.error.Error;
+import io.vavr.control.Either;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,17 +13,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.manning.writeflow.application.command.PublishArticleCommand;
-import com.manning.writeflow.application.ports.out.DomainEventPublisherOutputPort;
-import com.manning.writeflow.domain.entities.Article;
-import com.manning.writeflow.domain.entities.ArticleId;
-import com.manning.writeflow.domain.entities.AuthorId;
-import com.manning.writeflow.domain.entities.Content;
-import com.manning.writeflow.domain.entities.Title;
-import com.manning.writeflow.domain.repositories.ArticleRepository;
-import com.manning.writeflow.shared.error.Error;
+import java.time.Instant;
 
-import io.vavr.control.Either;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 /**
  * Unit tests for {@link PublishArticleHandler}.
@@ -58,6 +54,7 @@ class PublishArticleHandlerTest {
 
         given(this.command.articleId()).willReturn(ARTICLE_ID);
         given(this.command.authorId()).willReturn(AUTHOR_ID);
+        given(this.command.publicationDate()).willReturn(Instant.now());
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(draft));
         given(this.articleRepository.save(draft)).willReturn(Either.right(null));
         given(this.domainEventPublisher.publish(org.mockito.ArgumentMatchers.anyList())).willReturn(Either.right(null));
@@ -100,10 +97,11 @@ class PublishArticleHandlerTest {
         final ArticleId articleId = ArticleId.validateThenCreate(ARTICLE_ID).get();
         final AuthorId authorId = AuthorId.validateThenCreate(AUTHOR_ID).get();
         final Article published = draftArticle(articleId, authorId);
-        published.publish(authorId);
+        published.publish(authorId, Instant.now());
 
         given(this.command.articleId()).willReturn(ARTICLE_ID);
         given(this.command.authorId()).willReturn(AUTHOR_ID);
+        given(this.command.publicationDate()).willReturn(Instant.now());
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(published));
 
         //when
@@ -126,6 +124,7 @@ class PublishArticleHandlerTest {
 
         given(this.command.articleId()).willReturn(ARTICLE_ID);
         given(this.command.authorId()).willReturn(OTHER_AUTHOR_ID);
+        given(this.command.publicationDate()).willReturn(Instant.now());
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(draft));
 
         //when
@@ -150,6 +149,7 @@ class PublishArticleHandlerTest {
 
         given(this.command.articleId()).willReturn(ARTICLE_ID);
         given(this.command.authorId()).willReturn(AUTHOR_ID);
+        given(this.command.publicationDate()).willReturn(Instant.now());
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(draft));
         given(this.articleRepository.save(draft)).willReturn(Either.left(persistenceError));
 
@@ -174,6 +174,7 @@ class PublishArticleHandlerTest {
 
         given(this.command.articleId()).willReturn(ARTICLE_ID);
         given(this.command.authorId()).willReturn(AUTHOR_ID);
+        given(this.command.publicationDate()).willReturn(Instant.now());
         given(this.articleRepository.readById(articleId)).willReturn(Either.right(draft));
         given(this.articleRepository.save(draft)).willReturn(Either.right(null));
         given(this.domainEventPublisher.publish(org.mockito.ArgumentMatchers.anyList()))
