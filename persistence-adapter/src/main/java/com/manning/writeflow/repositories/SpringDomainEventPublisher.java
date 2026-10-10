@@ -7,7 +7,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import com.emedina.sharedkernel.application.annotation.Adapter;
 import com.manning.writeflow.application.ports.out.DomainEventPublisherOutputPort;
 import com.manning.writeflow.shared.event.DomainEvent;
+import com.manning.writeflow.shared.error.Error;
 
+import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -30,10 +32,13 @@ class SpringDomainEventPublisher implements DomainEventPublisherOutputPort {
      * Publishes each supplied domain event through Spring's application event mechanism.
      *
      * @param events the domain events to publish
+     * @return either success, or an error if the event could not be published
      */
     @Override
-    public void publish(final List<DomainEvent> events) {
+    public Either<Error, Void> publish(final List<DomainEvent> events) {
         events.forEach(this.applicationEventPublisher::publishEvent);
+
+        return Either.right(null);
     }
 
 }
