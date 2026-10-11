@@ -5,6 +5,7 @@
 /application-core/output-ports/target/
 /event-listener-adapter/target/
 /notification-adapter/target/
+/distribution-platform-adapter/target/
 /persistence-adapter/target/
 /rest-adapter/target/
 /shared-kernel/target/

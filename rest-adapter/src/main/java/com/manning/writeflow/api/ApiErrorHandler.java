@@ -63,6 +63,12 @@ final class ApiErrorHandler {
                         .formatted(notAllowed.authorId(), notAllowed.articleId()));
                 yield problemDetail;
             }
+            case Error.BusinessError.DistributionRejected rejected -> {
+                final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT.value());
+                problemDetail.setDetail("Distribution Platform rejected article [%s]: %s"
+                        .formatted(rejected.articleId(), rejected.reason()));
+                yield problemDetail;
+            }
         };
     }
 

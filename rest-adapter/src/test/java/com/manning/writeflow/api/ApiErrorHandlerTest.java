@@ -122,6 +122,21 @@ class ApiErrorHandlerTest {
             then(result.get(0).getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
             then(result.get(0).getDetail()).contains("not allowed to publish");
         }
+
+        @Test
+        @DisplayName("When mapping DistributionRejected, then should return CONFLICT")
+        void shouldReturnConflict_whenMappingDistributionRejected() {
+            // Given
+            final var error = new Error.BusinessError.DistributionRejected("id-1", "policy refusal");
+
+            // When
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
+
+            // Then
+            then(result).hasSize(1);
+            then(result.get(0).getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+            then(result.get(0).getDetail()).contains("policy refusal");
+        }
     }
 
     @Nested

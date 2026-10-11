@@ -29,6 +29,9 @@ public sealed interface Error extends Serializable {
         record AuthorNotAllowedToPublish(String authorId, String articleId) implements BusinessError {
         }
 
+        record DistributionRejected(String articleId, String reason) implements BusinessError {
+        }
+
     }
 
     sealed interface TechnicalError extends Error {

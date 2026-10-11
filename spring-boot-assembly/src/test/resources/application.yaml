@@ -88,7 +88,7 @@ hexagonal:
         - com.manning.writeflow.shared..
     handler:
       fqdns:
-        - com.manning.writeflow.application..
+        - com.manning.writeflow.application
       allowed-libraries:
         - java..
         - javax..
@@ -111,3 +111,4 @@ hexagonal:
         - com.manning.writeflow.repositories..
         - com.manning.writeflow.events..
         - com.manning.writeflow.external..
+        - com.manning.writeflow.external.distribution..

@@ -52,6 +52,7 @@
         <module>persistence-adapter</module>
         <module>event-listener-adapter</module>
         <module>notification-adapter</module>
+        <module>distribution-platform-adapter</module>
         <module>spring-boot-assembly</module>
     </modules>
 

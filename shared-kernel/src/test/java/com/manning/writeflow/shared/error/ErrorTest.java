@@ -103,6 +103,24 @@ class ErrorTest {
             then(result.articleId()).isEqualTo("article-1");
             then(result).isInstanceOf(Error.BusinessError.class);
         }
+
+        @Test
+        @DisplayName("When creating DistributionRejected, then should expose article id and reason")
+        void shouldExposeFields_whenDistributionRejectedCreated() {
+            // given
+            final Error.BusinessError.DistributionRejected first =
+                new Error.BusinessError.DistributionRejected("article-1", "policy refusal");
+            final Error.BusinessError.DistributionRejected second =
+                new Error.BusinessError.DistributionRejected("article-1", "policy refusal");
+
+            // then
+            then(first.articleId()).isEqualTo("article-1");
+            then(first.reason()).isEqualTo("policy refusal");
+            then(first).isInstanceOf(Error.BusinessError.class);
+            then(first).isEqualTo(second);
+            then(first.hashCode()).isEqualTo(second.hashCode());
+            then(first.toString()).contains("DistributionRejected").contains("policy refusal");
+        }
     }
 
     @Nested
