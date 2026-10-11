@@ -1,13 +1,14 @@
 package com.manning.writeflow.events;
 
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
 import com.emedina.sharedkernel.application.annotation.Adapter;
 import com.emedina.sharedkernel.command.core.CommandBus;
 import com.manning.writeflow.application.command.RecordIntegrationEventCommand;
 import com.manning.writeflow.shared.event.ArticlePublished;
+
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Event-listener adapter that reacts to the {@link ArticlePublished} domain event by recording an
@@ -19,14 +20,13 @@ import org.springframework.transaction.event.TransactionalEventListener;
  *
  * <p>The raw identifiers carried by the domain event are turned into a
  * {@link RecordIntegrationEventCommand} via its Either-returning factory, and the command is then
- * dispatched through the {@link CommandBus}. Any failure is logged rather than propagated, so that
- * a malformed event does not abort the surrounding transaction unexpectedly.</p>
+ * dispatched through the {@link CommandBus}. A failure is thrown so the surrounding transaction
+ * cannot commit without its outbox row.</p>
  *
- * @author Enrique Medina Montenegro
+ * @author Enrique Medina Montenegro (emedina)
  * @see CommandBus
  * @see ArticlePublished
  */
-@Slf4j
 @Adapter
 @RequiredArgsConstructor
 public class RecordIntegrationEventListener {
@@ -45,8 +45,10 @@ public class RecordIntegrationEventListener {
                 event.authorId(),
                 event.publishedAt())
             .flatMap(this.commandBus::execute)
-            .peekLeft(error -> log.warn("Failed to record integration event for article [{}]: {}",
-                event.articleId(), error));
+            .peekLeft(error -> {
+                throw new IllegalStateException("Failed to record integration event for article ["
+                    + event.articleId() + "]: " + error);
+            });
     }
 
 }

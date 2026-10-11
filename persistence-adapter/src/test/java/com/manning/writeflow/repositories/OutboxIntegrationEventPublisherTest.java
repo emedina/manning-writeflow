@@ -1,5 +1,6 @@
 package com.manning.writeflow.repositories;
 
+import static org.assertj.core.api.BDDAssertions.catchThrowable;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -19,6 +20,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 
 import com.manning.writeflow.shared.event.ArticlePublished;
+import com.manning.writeflow.shared.event.PublicationStarted;
 import com.manning.writeflow.shared.error.Error;
 
 import io.vavr.control.Either;
@@ -28,7 +30,7 @@ import tools.jackson.core.JacksonException;
 /**
  * Unit tests for {@link OutboxIntegrationEventPublisher}.
  *
- * @author Enrique Medina Montenegro
+ * @author Enrique Medina Montenegro (emedina)
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OutboxIntegrationEventPublisher Tests")
@@ -93,6 +95,36 @@ class OutboxIntegrationEventPublisherTest {
     }
 
     @Test
+    @DisplayName("When recording a publication request, then it should write its outbox contract")
+    void shouldWritePublicationStartedOutboxRow() {
+        //given
+        final PublicationStarted event = new PublicationStarted(ARTICLE_ID, AUTHOR_ID);
+        given(this.objectMapper.writeValueAsString(any())).willReturn("publication-started-payload");
+
+        //when
+        final Either<Error, Void> result = this.publisher.publish(event);
+
+        //then
+        then(result.isRight()).isTrue();
+        final ArgumentCaptor<PublicationStartedIntegrationEvent> eventCaptor =
+            ArgumentCaptor.forClass(PublicationStartedIntegrationEvent.class);
+        verify(this.objectMapper).writeValueAsString(eventCaptor.capture());
+        final PublicationStartedIntegrationEvent translated = eventCaptor.getValue();
+        then(translated.eventId()).isNotBlank();
+        then(translated.articleId()).isEqualTo(ARTICLE_ID);
+        then(translated.createdAt()).isNotNull();
+
+        final ArgumentCaptor<OutboxMessage> messageCaptor = ArgumentCaptor.forClass(OutboxMessage.class);
+        verify(this.springOutboxRepository).save(messageCaptor.capture());
+        final OutboxMessage saved = messageCaptor.getValue();
+        then(saved.getEventId()).isEqualTo(translated.eventId());
+        then(saved.getEventType()).isEqualTo("PublicationStarted");
+        then(saved.getPayload()).isEqualTo("publication-started-payload");
+        then(saved.getCreatedAt()).isEqualTo(translated.createdAt());
+        then(saved.getPublishedAt()).isNull();
+    }
+
+    @Test
     @DisplayName("When serialization fails, then it should return a PersistenceError")
     void shouldReturnPersistenceErrorOnSerializationFailure() {
         // Given
@@ -127,6 +159,22 @@ class OutboxIntegrationEventPublisherTest {
         then(result.getLeft()).isInstanceOf(Error.TechnicalError.PersistenceError.class);
         final var error = (Error.TechnicalError.PersistenceError) result.getLeft();
         then(error.message()).isEqualTo("db down");
+    }
+
+    @Test
+    @DisplayName("publish should propagate an unexpected failure when writing the outbox")
+    void publishShouldPropagateUnexpectedFailureWhenWritingOutbox() {
+        //given
+        given(this.objectMapper.writeValueAsString(any())).willReturn("payload");
+        final IllegalArgumentException failure = new IllegalArgumentException("invalid outbox state");
+        given(this.springOutboxRepository.save(any(OutboxMessage.class))).willThrow(failure);
+
+        //when
+        final Throwable thrown = catchThrowable(() -> this.publisher.publish(anEvent()));
+
+        //then
+        then(thrown).isInstanceOf(IllegalStateException.class);
+        then(thrown.getCause()).isSameAs(failure);
     }
 
 }

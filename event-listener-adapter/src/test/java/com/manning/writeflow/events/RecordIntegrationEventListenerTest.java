@@ -1,5 +1,6 @@
 package com.manning.writeflow.events;
 
+import static org.assertj.core.api.BDDAssertions.catchThrowable;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -16,12 +18,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-
 import com.manning.writeflow.application.command.RecordIntegrationEventCommand;
 import com.manning.writeflow.shared.event.ArticlePublished;
 import com.manning.writeflow.shared.error.Error;
-import com.manning.writeflow.shared.validation.ValidationError;
 import com.emedina.sharedkernel.command.Command;
 import com.emedina.sharedkernel.command.core.CommandBus;
 
@@ -30,7 +29,7 @@ import io.vavr.control.Either;
 /**
  * Unit tests for {@link RecordIntegrationEventListener}.
  *
- * @author Enrique Medina Montenegro
+ * @author Enrique Medina Montenegro (emedina)
  */
 @ExtendWith(MockitoExtension.class)
 class RecordIntegrationEventListenerTest {
@@ -45,31 +44,33 @@ class RecordIntegrationEventListenerTest {
     private RecordIntegrationEventListener listener;
 
     @Test
-    void should_dispatch_a_record_integration_event_command_when_an_article_is_published() {
-        // given
+    @DisplayName("on should dispatch a recording command when an article is published")
+    void onShouldDispatchRecordingCommandWhenArticleIsPublished() {
+        //given
         final ArticlePublished event = anArticlePublishedEvent();
         given(this.commandBus.execute(any(RecordIntegrationEventCommand.class))).willReturn(Either.right(null));
 
-        // when
+        //when
         this.listener.on(event);
 
-        // then
+        //then
         verify(this.commandBus).execute(this.commandCaptor.capture());
         then(this.commandCaptor.getValue()).isInstanceOf(RecordIntegrationEventCommand.class);
     }
 
     @Test
-    void should_swallow_and_log_a_command_bus_failure_without_propagating() {
-        // given
+    @DisplayName("on should throw when recording an article publication fails")
+    void onShouldThrowWhenRecordingArticlePublicationFails() {
+        //given
         final ArticlePublished event = anArticlePublishedEvent();
-        final Error error = new Error.ValidationErrors(
-            List.<ValidationError>of(new ValidationError.Mandatory("articleId")));
+        final Error error = new Error.TechnicalError.PersistenceError("outbox", "publish", "db down");
         given(this.commandBus.execute(any(RecordIntegrationEventCommand.class))).willReturn(Either.left(error));
 
-        // when
-        this.listener.on(event);
+        //when
+        final Throwable thrown = catchThrowable(() -> this.listener.on(event));
 
-        // then
+        //then
+        then(thrown).isInstanceOf(IllegalStateException.class);
         verify(this.commandBus).execute(any(RecordIntegrationEventCommand.class));
     }
 

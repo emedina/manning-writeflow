@@ -6,3 +6,4 @@ Class com.manning.writeflow.application.ports.in.WithdrawArticleUseCase has a ge
 Class com.manning.writeflow.application.ports.in.NotifySubscribersUseCase has a generic type Error at position 1 that is not assignable to Command
 Class com.manning.writeflow.application.ports.in.PublishArticleUseCase has a generic type Error at position 1 that is not assignable to Command
 Class com.manning.writeflow.application.ports.in.RecordIntegrationEventUseCase has a generic type Error at position 1 that is not assignable to Command
+Class com.manning.writeflow.application.ports.in.RecordPublicationStartedUseCase has a generic type Error at position 1 that is not assignable to Command
