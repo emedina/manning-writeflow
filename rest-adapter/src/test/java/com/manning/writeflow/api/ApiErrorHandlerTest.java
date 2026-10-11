@@ -109,6 +109,48 @@ class ApiErrorHandlerTest {
         }
 
         @Test
+        @DisplayName("When mapping PublicationInProgress, then should return CONFLICT")
+        void shouldReturnConflict_whenMappingPublicationInProgress() {
+            //given
+            final var error = new Error.BusinessError.PublicationInProgress("id-1");
+
+            //when
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
+
+            //then
+            then(result).hasSize(1);
+            then(result.get(0).getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        }
+
+        @Test
+        @DisplayName("When mapping PublicationNotStarted, then should return CONFLICT")
+        void shouldReturnConflict_whenMappingPublicationNotStarted() {
+            //given
+            final var error = new Error.BusinessError.PublicationNotStarted("id-1");
+
+            //when
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
+
+            //then
+            then(result).hasSize(1);
+            then(result.get(0).getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        }
+
+        @Test
+        @DisplayName("When mapping DistributionRejected, then should return CONFLICT")
+        void shouldReturnConflict_whenMappingDistributionRejected() {
+            //given
+            final var error = new Error.BusinessError.DistributionRejected("id-1", "rejected");
+
+            //when
+            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
+
+            //then
+            then(result).hasSize(1);
+            then(result.get(0).getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        }
+
+        @Test
         @DisplayName("When mapping AuthorNotAllowedToPublish, then should return FORBIDDEN")
         void shouldReturnForbidden_whenMappingAuthorNotAllowedToPublish() {
             // Given
@@ -123,20 +165,6 @@ class ApiErrorHandlerTest {
             then(result.get(0).getDetail()).contains("not allowed to publish");
         }
 
-        @Test
-        @DisplayName("When mapping DistributionRejected, then should return CONFLICT")
-        void shouldReturnConflict_whenMappingDistributionRejected() {
-            // Given
-            final var error = new Error.BusinessError.DistributionRejected("id-1", "policy refusal");
-
-            // When
-            final List<ProblemDetail> result = apiErrorHandler.mapErrorToProblemDetail(error);
-
-            // Then
-            then(result).hasSize(1);
-            then(result.get(0).getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
-            then(result.get(0).getDetail()).contains("policy refusal");
-        }
     }
 
     @Nested

@@ -1,14 +1,18 @@
 package com.manning.writeflow.domain.entities;
 
-import com.manning.writeflow.shared.error.Error;
-import com.manning.writeflow.shared.event.ArticlePublished;
-import com.manning.writeflow.shared.event.DomainEvent;
-import io.vavr.control.Either;
-import org.junit.jupiter.api.Test;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.manning.writeflow.shared.error.Error;
+import com.manning.writeflow.shared.event.ArticlePublished;
+import com.manning.writeflow.shared.event.DomainEvent;
+import com.manning.writeflow.shared.event.PublicationStarted;
+
+import io.vavr.control.Either;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -17,6 +21,7 @@ import static org.assertj.core.api.BDDAssertions.then;
  *
  * @author Enrique Medina Montenegro
  */
+@DisplayName("Article tests")
 class ArticleTest {
 
     private static ArticleId articleId() {
@@ -36,23 +41,33 @@ class ArticleTest {
     }
 
     @Test
-    void shouldCreateDraftArticle_whenAllFieldsValid() {
-        // when
-        final Either<Error, Article> result =
-            Article.validateThenCreate(articleId(), title(), content(), authorId());
+    @DisplayName("When all fields are valid, then article creation should return a draft")
+    void validateThenCreateShouldCreateDraftArticleWhenAllFieldsAreValid() {
+        //given
+        final ArticleId id = articleId();
+        final Title articleTitle = title();
+        final Content articleContent = content();
+        final AuthorId author = authorId();
 
-        // then
+        //when
+        final Either<Error, Article> result =
+            Article.validateThenCreate(id, articleTitle, articleContent, author);
+
+        //then
         then(result.isRight()).isTrue();
         then(result.get().status()).isEqualTo(ArticleStatus.DRAFT);
         then(result.get().popDomainEvents()).isEmpty();
     }
 
     @Test
-    void shouldReturnValidationErrors_whenAllFieldsNull() {
-        // when
+    @DisplayName("When all fields are null, then article creation should return validation errors")
+    void validateThenCreateShouldReturnValidationErrorsWhenAllFieldsAreNull() {
+        //given
+
+        //when
         final Either<Error, Article> result = Article.validateThenCreate(null, null, null, null);
 
-        // then
+        //then
         then(result.isLeft()).isTrue();
         then(result.getLeft()).isInstanceOf(Error.ValidationErrors.class);
         final Error.ValidationErrors errors = (Error.ValidationErrors) result.getLeft();
@@ -60,101 +75,113 @@ class ArticleTest {
     }
 
     @Test
-    void shouldReturnValidationErrors_whenSingleFieldNull() {
-        // when
-        final Either<Error, Article> result =
-            Article.validateThenCreate(articleId(), null, content(), authorId());
+    @DisplayName("When a field is null, then article creation should return a validation error")
+    void validateThenCreateShouldReturnValidationErrorsWhenAFieldIsNull() {
+        //given
+        final ArticleId id = articleId();
+        final Content articleContent = content();
+        final AuthorId author = authorId();
 
-        // then
+        //when
+        final Either<Error, Article> result =
+            Article.validateThenCreate(id, null, articleContent, author);
+
+        //then
         then(result.isLeft()).isTrue();
         final Error.ValidationErrors errors = (Error.ValidationErrors) result.getLeft();
         then(errors.errors()).hasSize(1);
     }
 
     @Test
-    void shouldPublishArticle_whenDraftAndRequestedByOwningAuthor() {
-        // given
+    @DisplayName("When the owning author starts publication, then the article should enter PUBLISHING")
+    void startPublicationShouldEnterPublishingWhenRequestedByOwningAuthor() {
+        //given
         final AuthorId author = authorId();
         final Article article =
             Article.validateThenCreate(articleId(), title(), content(), author).get();
 
-        // when
-        final Either<Error, Article> result = article.publish(author, Instant.now());
+        //when
+        final Either<Error, Article> result = article.startPublication(author);
 
-        // then
+        //then
         then(result.isRight()).isTrue();
-        then(result.get().status()).isEqualTo(ArticleStatus.PUBLISHED);
+        then(result.get().status()).isEqualTo(ArticleStatus.PUBLISHING);
     }
 
     @Test
-    void shouldRaiseArticlePublishedEvent_whenPublished() {
-        // given
+    @DisplayName("When publication starts, then the article should raise PublicationStarted")
+    void startPublicationShouldRaisePublicationStartedEventWhenPublicationStarts() {
+        //given
         final AuthorId author = authorId();
         final ArticleId id = articleId();
         final Article article = Article.validateThenCreate(id, title(), content(), author).get();
 
-        // when
-        article.publish(author, Instant.now());
+        //when
+        article.startPublication(author);
         final List<DomainEvent> events = article.popDomainEvents();
 
-        // then
+        //then
         then(events).hasSize(1);
-        then(events.get(0)).isInstanceOf(ArticlePublished.class);
-        final ArticlePublished published = (ArticlePublished) events.get(0);
-        then(published.articleId()).isEqualTo(id.value());
-        then(published.authorId()).isEqualTo(author.value());
-        then(published.publishedAt()).isNotNull();
+        then(events.get(0)).isInstanceOf(PublicationStarted.class);
+        final PublicationStarted started = (PublicationStarted) events.getFirst();
+        then(started.articleId()).isEqualTo(id.value());
+        then(started.authorId()).isEqualTo(author.value());
     }
 
     @Test
-    void shouldClearDomainEvents_whenPopped() {
-        // given
+    @DisplayName("When domain events are popped, then the next pop should be empty")
+    void popDomainEventsShouldClearEventsWhenEventsArePopped() {
+        //given
         final AuthorId author = authorId();
         final Article article =
             Article.validateThenCreate(articleId(), title(), content(), author).get();
-        article.publish(author, Instant.now());
+        article.startPublication(author);
 
-        // when
+        //when
         final List<DomainEvent> first = article.popDomainEvents();
         final List<DomainEvent> second = article.popDomainEvents();
 
-        // then
+        //then
         then(first).hasSize(1);
         then(second).isEmpty();
     }
 
     @Test
-    void shouldRejectPublication_whenArticleAlreadyPublished() {
-        // given
+    @DisplayName("When publication is already in progress, then a repeated start should be rejected")
+    void startPublicationShouldRejectRepeatWhenPublicationIsInProgress() {
+        //given
         final AuthorId author = authorId();
         final ArticleId id = articleId();
         final Article article = Article.validateThenCreate(id, title(), content(), author).get();
-        article.publish(author, Instant.now());
+        article.startPublication(author);
         article.popDomainEvents();
 
-        // when
-        final Either<Error, Article> result = article.publish(author, Instant.now());
+        //when
+        final Either<Error, Article> result = article.startPublication(author);
 
-        // then
+        //then
         then(result.isLeft()).isTrue();
-        then(result.getLeft()).isInstanceOf(Error.BusinessError.ArticleAlreadyPublished.class);
-        final Error.BusinessError.ArticleAlreadyPublished error =
-            (Error.BusinessError.ArticleAlreadyPublished) result.getLeft();
+        then(result.getLeft()).isInstanceOf(Error.BusinessError.PublicationInProgress.class);
+        final Error.BusinessError.PublicationInProgress error =
+            (Error.BusinessError.PublicationInProgress) result.getLeft();
         then(error.articleId()).isEqualTo(id.value());
+        then(article.status()).isEqualTo(ArticleStatus.PUBLISHING);
+        then(article.popDomainEvents()).isEmpty();
     }
 
     @Test
-    void shouldRejectPublication_whenRequestingAuthorIsNotTheOwner() {
-        // given
+    @DisplayName("When a non-owner starts publication, then the article should remain a draft")
+    void startPublicationShouldRejectRequestWhenAuthorDoesNotOwnArticle() {
+        //given
         final AuthorId owner = authorId();
         final AuthorId intruder = authorId();
         final ArticleId id = articleId();
         final Article article = Article.validateThenCreate(id, title(), content(), owner).get();
 
-        // when
-        final Either<Error, Article> result = article.publish(intruder, Instant.now());
+        //when
+        final Either<Error, Article> result = article.startPublication(intruder);
 
-        // then
+        //then
         then(result.isLeft()).isTrue();
         then(result.getLeft()).isInstanceOf(Error.BusinessError.AuthorNotAllowedToPublish.class);
         final Error.BusinessError.AuthorNotAllowedToPublish error =
@@ -162,20 +189,106 @@ class ArticleTest {
         then(error.authorId()).isEqualTo(intruder.value());
         then(error.articleId()).isEqualTo(id.value());
         then(article.status()).isEqualTo(ArticleStatus.DRAFT);
+        then(article.popDomainEvents()).isEmpty();
     }
 
     @Test
-    void shouldReconstituteArticle_withoutValidationAndEmptyEvents() {
-        // given
+    @DisplayName("When an article is reconstituted, then it should preserve state without events")
+    void reconstituteShouldPreserveStateWithoutRaisingEvents() {
+        //given
         final ArticleId id = articleId();
 
-        // when
+        //when
         final Article article =
             Article.reconstitute(id, title(), content(), authorId(), ArticleStatus.PUBLISHED);
 
-        // then
+        //then
         then(article.status()).isEqualTo(ArticleStatus.PUBLISHED);
         then(article.id()).isEqualTo(id);
+        then(article.popDomainEvents()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When publication is in progress, then confirmation should publish the article")
+    void confirmPublicationShouldPublishArticleWhenPublicationIsInProgress() {
+        //given
+        final Article article = Article.validateThenCreate(articleId(), title(), content(), authorId()).get();
+        article.startPublication(article.authorId());
+        article.popDomainEvents();
+
+        //when
+        final Either<Error, Article> result = article.confirmPublication(Instant.parse("2026-06-07T10:15:30Z"));
+
+        //then
+        then(result.isRight()).isTrue();
+        then(article.status()).isEqualTo(ArticleStatus.PUBLISHED);
+        then(article.popDomainEvents()).hasSize(1).first().isInstanceOf(ArticlePublished.class);
+    }
+
+    @Test
+    @DisplayName("When publication is confirmed again, then it should succeed without raising events")
+    void confirmPublicationShouldBeIdempotentWhenArticleIsPublished() {
+        //given
+        final Article article = Article.reconstitute(articleId(), title(), content(), authorId(), ArticleStatus.PUBLISHED);
+
+        //when
+        final Either<Error, Article> result = article.confirmPublication(Instant.now());
+
+        //then
+        then(result.isRight()).isTrue();
+        then(article.status()).isEqualTo(ArticleStatus.PUBLISHED);
+        then(article.popDomainEvents()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When publication has not started, then confirmation should be rejected")
+    void confirmPublicationShouldRejectRequestWhenArticleIsDraft() {
+        //given
+        final Article article = Article.validateThenCreate(articleId(), title(), content(), authorId()).get();
+
+        //when
+        final Either<Error, Article> result = article.confirmPublication(Instant.now());
+
+        //then
+        then(result.isLeft()).isTrue();
+        then(result.getLeft()).isInstanceOf(Error.BusinessError.PublicationNotStarted.class);
+        then(article.status()).isEqualTo(ArticleStatus.DRAFT);
+        then(article.popDomainEvents()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When publication is reverted, then repeating the revert should succeed without events")
+    void revertPublicationShouldBeIdempotentWhenPublicationIsReverted() {
+        //given
+        final Article article = Article.validateThenCreate(articleId(), title(), content(), authorId()).get();
+        article.startPublication(article.authorId());
+        article.popDomainEvents();
+
+        //when
+        final Either<Error, Article> result = article.revertPublication();
+        final Either<Error, Article> repeated = article.revertPublication();
+
+        //then
+        then(result.isRight()).isTrue();
+        then(repeated.isRight()).isTrue();
+        then(article.status()).isEqualTo(ArticleStatus.DRAFT);
+        then(article.popDomainEvents()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When an article is published, then starting and reverting should be rejected")
+    void startAndRevertPublicationShouldRejectRequestWhenArticleIsPublished() {
+        //given
+        final Article article = Article.reconstitute(articleId(), title(), content(), authorId(), ArticleStatus.PUBLISHED);
+
+        //when
+        final Either<Error, Article> start = article.startPublication(article.authorId());
+        final Either<Error, Article> revert = article.revertPublication();
+
+        //then
+        then(start.getLeft()).isInstanceOf(Error.BusinessError.ArticleAlreadyPublished.class);
+        then(revert.getLeft()).isInstanceOf(Error.BusinessError.ArticleAlreadyPublished.class);
+        then(article.status()).isEqualTo(ArticleStatus.PUBLISHED);
         then(article.popDomainEvents()).isEmpty();
     }
 

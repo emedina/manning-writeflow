@@ -3,6 +3,7 @@ package com.manning.writeflow.domain.entities;
 import com.manning.writeflow.shared.error.Error;
 import com.manning.writeflow.shared.event.ArticlePublished;
 import com.manning.writeflow.shared.event.DomainEvent;
+import com.manning.writeflow.shared.event.PublicationStarted;
 import com.manning.writeflow.shared.validation.ValidationError;
 import com.manning.writeflow.shared.validation.Validations;
 import io.vavr.control.Either;
@@ -84,7 +85,7 @@ public class Article {
      * reconstitution constructor), the reconstitution path accepts the persisted {@link ArticleStatus} as ground truth
      * and therefore performs <strong>no validation</strong>, raises <strong>no domain events</strong>, and never fails.
      * Creation-time invariants and the {@code ArticlePublished} event belong to the creation and
-     * {@link #publish(AuthorId, Instant)} paths only, never to a load from storage.</p>
+     * publication transition paths only, never to a load from storage.</p>
      *
      * @param id       the identifier of the article
      * @param title    the title of the article
@@ -101,24 +102,60 @@ public class Article {
     }
 
     /**
-     * Publishes this article on behalf of the requesting author.
+     * Starts publication on behalf of the requesting author.
      *
      * @param requestingAuthor the author requesting publication
-     * @param publicationDate  the date of publication
-     * @return {@link Either#right} with this article transitioned to {@link ArticleStatus#PUBLISHED} when allowed,
+     * @return {@link Either#right} with this article transitioned to {@link ArticleStatus#PUBLISHING} when allowed,
      * otherwise {@link Either#left} with the appropriate {@link Error.BusinessError}
      */
-    public Either<Error, Article> publish(final AuthorId requestingAuthor, final Instant publicationDate) {
-        if (this.status != ArticleStatus.DRAFT) {
+    public Either<Error, Article> startPublication(final AuthorId requestingAuthor) {
+        if (this.status == ArticleStatus.PUBLISHING) {
+            return Either.left(new Error.BusinessError.PublicationInProgress(this.id.value()));
+        }
+        if (this.status == ArticleStatus.PUBLISHED) {
             return Either.left(new Error.BusinessError.ArticleAlreadyPublished(this.id.value()));
         }
         if (!this.authorId.equals(requestingAuthor)) {
             return Either.left(new Error.BusinessError.AuthorNotAllowedToPublish(
                 requestingAuthor.value(), this.id.value()));
         }
+        this.status = ArticleStatus.PUBLISHING;
+        this.domainEvents.add(new PublicationStarted(this.id.value(), this.authorId.value()));
+
+        return Either.right(this);
+    }
+
+    /**
+     * Confirms publication after it has started.
+     *
+     * @param publicationDate the instant at which publication completed
+     * @return this article in the published state, or the applicable business error
+     */
+    public Either<Error, Article> confirmPublication(final Instant publicationDate) {
+        if (this.status == ArticleStatus.PUBLISHED) {
+            return Either.right(this);
+        }
+        if (this.status == ArticleStatus.DRAFT) {
+            return Either.left(new Error.BusinessError.PublicationNotStarted(this.id.value()));
+        }
         this.status = ArticleStatus.PUBLISHED;
         this.domainEvents.add(new ArticlePublished(this.id.value(), this.authorId.value(), publicationDate));
+        return Either.right(this);
+    }
 
+    /**
+     * Reverts an in-progress publication to draft.
+     *
+     * @return this article in draft, or an error when publication has already completed
+     */
+    public Either<Error, Article> revertPublication() {
+        if (this.status == ArticleStatus.DRAFT) {
+            return Either.right(this);
+        }
+        if (this.status == ArticleStatus.PUBLISHED) {
+            return Either.left(new Error.BusinessError.ArticleAlreadyPublished(this.id.value()));
+        }
+        this.status = ArticleStatus.DRAFT;
         return Either.right(this);
     }
 

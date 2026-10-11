@@ -8,6 +8,7 @@ package com.manning.writeflow.domain.entities;
 public enum ArticleStatus {
 
     DRAFT,
+    PUBLISHING,
     PUBLISHED
 
 }

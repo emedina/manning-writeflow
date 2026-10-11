@@ -3,6 +3,7 @@ package com.manning.writeflow.repositories;
 import java.util.List;
 
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import com.emedina.sharedkernel.application.annotation.Adapter;
 import com.manning.writeflow.domain.entities.Article;
@@ -23,7 +24,8 @@ import lombok.RequiredArgsConstructor;
  * model and the {@link JpaArticle} persistence model via {@link ArticlePersistenceMapper}, maps
  * a missing article to {@link Error.BusinessError.NotFound} (R6: {@code readById} returns a bare
  * {@link Either}, never {@code Optional}), and converts infrastructure failures into
- * {@link Error.TechnicalError.PersistenceError}.</p>
+ * {@link Error.TechnicalError.PersistenceError}. Optimistic-locking behavior is demonstrated by
+ * running the application and is not covered by an automated test.</p>
  *
  * @author Enrique Medina Montenegro
  */
@@ -48,9 +50,14 @@ class JpaArticleRepository implements ArticleRepository {
     @Override
     public Either<Error, Void> save(final Article article) {
         try {
-            this.springArticleRepository.save(this.mapper.toJpaEntity(article));
+            final JpaArticle managedEntity = this.springArticleRepository.findById(article.id().value())
+                .orElseGet(() -> this.mapper.toJpaEntity(article));
+            this.updateManagedEntity(managedEntity, article);
+            this.springArticleRepository.save(managedEntity);
 
             return Either.right(null);
+        } catch (final OptimisticLockingFailureException e) {
+            return Either.left(new Error.TechnicalError.PersistenceError(ORIGIN, "save", e.getMessage()));
         } catch (final DataAccessException e) {
             return Either.left(new Error.TechnicalError.PersistenceError(ORIGIN, "save", e.getMessage()));
         }
@@ -97,6 +104,13 @@ class JpaArticleRepository implements ArticleRepository {
             .toList();
 
         return Either.right(dtos);
+    }
+
+    private void updateManagedEntity(final JpaArticle managedEntity, final Article article) {
+        managedEntity.setTitle(article.title().value());
+        managedEntity.setContent(article.content().value());
+        managedEntity.setAuthorId(article.authorId().value());
+        managedEntity.setStatus(article.status().name());
     }
 
 }

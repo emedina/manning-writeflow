@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,10 @@ public class JpaArticle {
 
     @Column(name = "status", nullable = false)
     private String status;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
 
     /**
      * Convenience constructor used by the mapper to build a fully-populated entity.

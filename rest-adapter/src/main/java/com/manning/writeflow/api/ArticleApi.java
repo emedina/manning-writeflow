@@ -57,9 +57,9 @@ sealed interface ArticleApi permits ArticleController {
      * Publishes an existing draft article.
      *
      * @param articleId the identifier of the article to publish
-     * @param articleRequest the body carrying the requesting author and publication date
+     * @param articleRequest the body carrying the requesting author
      * @param request the originating HTTP request
-     * @return a 204 No Content response on success, or a problem details response on failure
+     * @return a 202 Accepted response with the article resource location, or a problem details response on failure
      */
     @PostMapping(path = "/{articleId}/publication")
     @Operation(
@@ -67,7 +67,7 @@ sealed interface ArticleApi permits ArticleController {
             description = "Publishes an existing draft article identified by its identifier"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "The article was published successfully"),
+            @ApiResponse(responseCode = "202", description = "Publication was accepted"),
             @ApiResponse(responseCode = "400", description = "The provided data is invalid"),
             @ApiResponse(responseCode = "403", description = "The requesting author is not allowed to publish the article"),
             @ApiResponse(responseCode = "404", description = "The identifier is unknown to the system"),

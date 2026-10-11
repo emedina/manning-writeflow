@@ -57,16 +57,28 @@ final class ApiErrorHandler {
                         .formatted(alreadyPublished.articleId()));
                 yield problemDetail;
             }
-            case Error.BusinessError.AuthorNotAllowedToPublish notAllowed -> {
-                final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN.value());
-                problemDetail.setDetail("Author [%s] is not allowed to publish article [%s]"
-                        .formatted(notAllowed.authorId(), notAllowed.articleId()));
+            case Error.BusinessError.PublicationInProgress inProgress -> {
+                final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT.value());
+                problemDetail.setDetail("Publication for article [%s] is already in progress"
+                        .formatted(inProgress.articleId()));
+                yield problemDetail;
+            }
+            case Error.BusinessError.PublicationNotStarted notStarted -> {
+                final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT.value());
+                problemDetail.setDetail("Publication for article [%s] has not started"
+                        .formatted(notStarted.articleId()));
                 yield problemDetail;
             }
             case Error.BusinessError.DistributionRejected rejected -> {
                 final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT.value());
                 problemDetail.setDetail("Distribution Platform rejected article [%s]: %s"
                         .formatted(rejected.articleId(), rejected.reason()));
+                yield problemDetail;
+            }
+            case Error.BusinessError.AuthorNotAllowedToPublish notAllowed -> {
+                final ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN.value());
+                problemDetail.setDetail("Author [%s] is not allowed to publish article [%s]"
+                        .formatted(notAllowed.authorId(), notAllowed.articleId()));
                 yield problemDetail;
             }
         };

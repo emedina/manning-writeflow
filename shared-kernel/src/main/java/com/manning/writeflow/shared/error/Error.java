@@ -26,10 +26,16 @@ public sealed interface Error extends Serializable {
         record ArticleAlreadyPublished(String articleId) implements BusinessError {
         }
 
-        record AuthorNotAllowedToPublish(String authorId, String articleId) implements BusinessError {
+        record PublicationInProgress(String articleId) implements BusinessError {
+        }
+
+        record PublicationNotStarted(String articleId) implements BusinessError {
         }
 
         record DistributionRejected(String articleId, String reason) implements BusinessError {
+        }
+
+        record AuthorNotAllowedToPublish(String authorId, String articleId) implements BusinessError {
         }
 
     }

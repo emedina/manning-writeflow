@@ -15,9 +15,8 @@ sealed interface ApiRequest {
      * Body of a request to publish an article.
      *
      * @param authorId the raw identifier of the author requesting publication
-     * @param publicationDate the requested publication date in ISO-8601 instant format
      */
-    record PublishArticle(String authorId, String publicationDate) implements ApiRequest {
+    record PublishArticle(String authorId) implements ApiRequest {
     }
 
     /**

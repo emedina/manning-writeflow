@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -91,6 +92,30 @@ class ApiGlobalExceptionHandlerTest {
             then(result.getBody().getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
             then(result.getBody().getTitle()).isEqualTo("Internal Server Error");
             then(result.getBody().getDetail()).isEqualTo("An unexpected error occurred");
+        }
+    }
+
+    @Nested
+    @DisplayName("Given OptimisticLockingFailureException")
+    class OptimisticLockingFailureExceptionTests {
+
+        @Test
+        @DisplayName("When handling a concurrent update, then should return CONFLICT")
+        void shouldReturnConflictWhenHandlingOptimisticLockingFailure() {
+            //given
+            final OptimisticLockingFailureException exception =
+                    new OptimisticLockingFailureException("The article version is stale");
+
+            //when
+            final ResponseEntity<ProblemDetail> result =
+                    ApiGlobalExceptionHandlerTest.this.exceptionHandler
+                            .handleOptimisticLockingFailure(exception);
+
+            //then
+            then(result.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+            then(result.getBody()).isNotNull();
+            then(result.getBody().getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+            then(result.getBody().getTitle()).isEqualTo("Conflict");
         }
     }
 

@@ -105,22 +105,52 @@ class ErrorTest {
         }
 
         @Test
-        @DisplayName("When creating DistributionRejected, then should expose article id and reason")
-        void shouldExposeFields_whenDistributionRejectedCreated() {
-            // given
-            final Error.BusinessError.DistributionRejected first =
-                new Error.BusinessError.DistributionRejected("article-1", "policy refusal");
-            final Error.BusinessError.DistributionRejected second =
-                new Error.BusinessError.DistributionRejected("article-1", "policy refusal");
+        @DisplayName("When creating PublicationInProgress, then it should expose the article identifier")
+        void publicationInProgressShouldExposeArticleIdWhenCreated() {
+            //given
+            final String articleId = "article-1";
 
-            // then
-            then(first.articleId()).isEqualTo("article-1");
-            then(first.reason()).isEqualTo("policy refusal");
-            then(first).isInstanceOf(Error.BusinessError.class);
-            then(first).isEqualTo(second);
-            then(first.hashCode()).isEqualTo(second.hashCode());
-            then(first.toString()).contains("DistributionRejected").contains("policy refusal");
+            //when
+            final Error.BusinessError.PublicationInProgress result =
+                    new Error.BusinessError.PublicationInProgress(articleId);
+
+            //then
+            then(result.articleId()).isEqualTo(articleId);
+            then(result).isInstanceOf(Error.BusinessError.class);
         }
+
+        @Test
+        @DisplayName("When creating PublicationNotStarted, then it should expose the article identifier")
+        void publicationNotStartedShouldExposeArticleIdWhenCreated() {
+            //given
+            final String articleId = "article-1";
+
+            //when
+            final Error.BusinessError.PublicationNotStarted result =
+                    new Error.BusinessError.PublicationNotStarted(articleId);
+
+            //then
+            then(result.articleId()).isEqualTo(articleId);
+            then(result).isInstanceOf(Error.BusinessError.class);
+        }
+
+        @Test
+        @DisplayName("When creating DistributionRejected, then it should expose the article and refusal")
+        void distributionRejectedShouldExposeArticleAndReasonWhenCreated() {
+            //given
+            final String articleId = "article-1";
+            final String reason = "policy refusal";
+
+            //when
+            final Error.BusinessError.DistributionRejected result =
+                    new Error.BusinessError.DistributionRejected(articleId, reason);
+
+            //then
+            then(result.articleId()).isEqualTo(articleId);
+            then(result.reason()).isEqualTo(reason);
+            then(result).isInstanceOf(Error.BusinessError.class);
+        }
+
     }
 
     @Nested

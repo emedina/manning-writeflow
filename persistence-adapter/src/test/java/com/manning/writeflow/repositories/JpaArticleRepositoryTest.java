@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import com.manning.writeflow.domain.entities.Article;
 import com.manning.writeflow.domain.entities.ArticleId;
@@ -78,25 +79,61 @@ class JpaArticleRepositoryTest {
     }
 
     @Test
+    @DisplayName("When saving an article with a managed entity, then it should update and save that entity")
+    void saveShouldUpdateManagedEntityWhenArticleExists() {
+        //given
+        final Article article = anArticle();
+        article.startPublication(article.authorId());
+        final JpaArticle managedEntity = aJpaArticle();
+        given(this.springArticleRepository.findById(ARTICLE_ID)).willReturn(Optional.of(managedEntity));
+
+        //when
+        final Either<Error, Void> result = this.repository.save(article);
+
+        //then
+        then(result.isRight()).isTrue();
+        then(managedEntity.getStatus()).isEqualTo(ArticleStatus.PUBLISHING.name());
+        verify(this.springArticleRepository).save(managedEntity);
+    }
+
+    @Test
     @DisplayName("When saving throws a data-access exception, then it should return a PersistenceError")
     void shouldReturnPersistenceErrorOnSaveFailure() {
-        // Given
+        //given
         final Article article = anArticle();
         final JpaArticle jpa = aJpaArticle();
         given(this.mapper.toJpaEntity(article)).willReturn(jpa);
         final DataAccessException ex = new DataAccessResourceFailureException("db down");
         given(this.springArticleRepository.save(jpa)).willThrow(ex);
 
-        // When
+        //when
         final Either<Error, Void> result = this.repository.save(article);
 
-        // Then
+        //then
         then(result.isLeft()).isTrue();
         then(result.getLeft()).isInstanceOf(Error.TechnicalError.PersistenceError.class);
         final var error = (Error.TechnicalError.PersistenceError) result.getLeft();
         then(error.origin()).isEqualTo("JpaArticleRepository");
         then(error.operation()).isEqualTo("save");
         then(error.message()).isEqualTo("db down");
+    }
+
+    @Test
+    @DisplayName("When saving loses an optimistic lock, then it should return a PersistenceError")
+    void saveShouldReturnPersistenceErrorWhenOptimisticLockFails() {
+        //given
+        final Article article = anArticle();
+        final JpaArticle jpa = aJpaArticle();
+        given(this.mapper.toJpaEntity(article)).willReturn(jpa);
+        given(this.springArticleRepository.save(jpa)).willThrow(
+                new OptimisticLockingFailureException("stale article"));
+
+        //when
+        final Either<Error, Void> result = this.repository.save(article);
+
+        //then
+        then(result.isLeft()).isTrue();
+        then(result.getLeft()).isInstanceOf(Error.TechnicalError.PersistenceError.class);
     }
 
     @Test

@@ -13,10 +13,12 @@ WriteFlow models the lifecycle of an article through three use cases:
 | Endpoint | Use case | Result |
 | --- | --- | --- |
 | `POST /api/articles` | Create a draft article | `201 Created` + server-generated id, status `DRAFT` |
-| `POST /api/articles/{id}/publication` | Publish an existing draft | `204 No Content` |
+| `POST /api/articles/{id}/publication` | Start publication for a draft | `202 Accepted` + `Location`; article status `PUBLISHING` |
 | `GET /api/articles/{id}` | Retrieve an article | `200 OK` + article representation |
 
-Publishing an article raises a domain event that is routed through two transaction-phase listeners — one that records an integration event into a **transactional outbox** (before commit, atomically with the business change), and one that fires a notification (after commit, once the change is durable).
+The publication request commits the Article in `PUBLISHING` and raises `PublicationStarted`. This step has no workflow to
+advance the Article, so it remains in that state. When a later step confirms publication, `ArticlePublished` is recorded
+through the transactional outbox and the notification listener runs after commit.
 
 ---
 
@@ -27,7 +29,7 @@ The book teaches hexagonal architecture inside-out, and this codebase is the des
 - **An always-valid aggregate, with a guarded reconstitution path.** `Article` is *created* only through `validateThenCreate` (which enforces every invariant) and *rehydrated* only through `reconstitute` (which trusts persisted data and raises no events). A **custom ArchUnit rule** — not a visibility modifier — guarantees `reconstitute` is reachable only from the persistence adapter.
 - **Either-only error handling, all the way out.** Value objects, the entity, commands, queries, and output ports all return `Either<Error, T>`. Expected failures travel as left values along functional rails from the core to the controller, where an exhaustive `switch` over a sealed `Error` hierarchy maps each one to an HTTP status — with no `default` branch, so a new error variant cannot compile until someone decides its status. Exceptions are reserved for the genuinely exceptional.
 - **Ports that hide technology behind contracts.** Every output port carries the `OutputPort` suffix; every adapter is `@Adapter` and package-private. Substituting one adapter for another — a fake notification for a real email gateway, H2 for a production database — is an assembly-time decision that touches no core code.
-- **The transactional outbox.** Publishing an article and recording its integration event happen in **one transaction**. The published-article fact lives in three representations — domain event, integration event, outbox row — each serving a different audience and changing for a different reason.
+- **The transactional outbox.** Confirming publication and recording its integration event happen in **one transaction**. The published-article fact has three representations: domain event, integration event and outbox row. Each serves a different audience and changes for a different reason.
 - **Stereotype-driven assembly.** The composition root wires beans by architectural *role* (`@ApplicationService`, `@Adapter`, `@DomainService`), keeping framework annotations out of the inner layers. The command and query buses derive their routing tables from the handlers' generic types — adding a use case requires no edit to the composition root.
 - **Architecture *and* behaviour, verified on every build.** A reusable ArchUnit checker library proves the structure is hexagonal; a suite of unit tests proves the behaviour is correct. `mvn clean verify` is green only when both hold.
 
@@ -117,12 +119,12 @@ curl -i -X POST http://localhost:8086/api/articles \
   -H 'Content-Type: application/json' \
   -d '{"authorId":"22222222-2222-2222-2222-222222222222","title":"Hexagons all the way down","content":"..."}'
 
-# 2. Publish it — returns 204 (use the id from step 1)
+# 2. Start publication (returns 202 and a Location header; use the id from step 1)
 curl -i -X POST http://localhost:8086/api/articles/{id}/publication \
   -H 'Content-Type: application/json' \
-  -d '{"authorId":"22222222-2222-2222-2222-222222222222","publicationDate":"2026-06-13T10:15:30Z"}'
+  -d '{"authorId":"22222222-2222-2222-2222-222222222222"}'
 
-# 3. Retrieve it — returns 200 with status PUBLISHED
+# 3. Retrieve it (returns 200 with status PUBLISHING; no workflow advances it yet)
 curl -i http://localhost:8086/api/articles/{id}
 ```
 

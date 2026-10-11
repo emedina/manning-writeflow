@@ -1,5 +1,6 @@
 package com.manning.writeflow.api;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,21 @@ final class ApiGlobalExceptionHandler {
         problemDetail.setTitle("Bad Request");
 
         return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+    /**
+     * Handles a losing concurrent update.
+     *
+     * @param ex the optimistic locking failure
+     * @return a 409 Conflict response
+     */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    ResponseEntity<ProblemDetail> handleOptimisticLockingFailure(final OptimisticLockingFailureException ex) {
+        log.atWarn().setMessage("Concurrent article update rejected").setCause(ex).log();
+        final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "The article was changed by another request");
+        problemDetail.setTitle("Conflict");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
     }
 
     /**

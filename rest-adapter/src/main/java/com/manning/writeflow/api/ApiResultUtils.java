@@ -34,6 +34,20 @@ final class ApiResultUtils {
     }
 
     /**
+     * Creates a success response with a location header.
+     *
+     * @param status the HTTP status
+     * @param response the response body
+     * @param location the URI of the accepted resource
+     * @return the success response
+     */
+    static ResponseEntity<ApiResponse> createSuccessResponse(final HttpStatusCode status,
+                                                             final ApiResponse response,
+                                                             final URI location) {
+        return ResponseEntity.status(status).location(location).body(response);
+    }
+
+    /**
      * Creates a failure response with a list of {@link ProblemDetail}, setting the originating {@link URI}.
      *
      * @param problemDetails the list of problems

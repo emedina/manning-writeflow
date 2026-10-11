@@ -1,9 +1,6 @@
 package com.manning.writeflow.api;
 
 import java.net.URI;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -17,7 +14,6 @@ import com.manning.writeflow.application.command.PublishArticleCommand;
 import com.manning.writeflow.application.query.GetArticleByIdQuery;
 import com.manning.writeflow.shared.dto.ArticleDTO;
 import com.manning.writeflow.shared.error.Error;
-import com.manning.writeflow.shared.validation.ValidationError;
 import com.emedina.sharedkernel.command.core.CommandBus;
 import com.emedina.sharedkernel.query.core.QueryBus;
 
@@ -70,14 +66,15 @@ final class ArticleController implements ArticleApi {
     public ResponseEntity<?> publish(@PathVariable("articleId") final String articleId,
             @RequestBody final ApiRequest.PublishArticle articleRequest, final HttpServletRequest request) {
         log.atTrace().log(Thread.currentThread().getName());
-        return this.parsePublicationDate(articleRequest.publicationDate())
-                .flatMap(publicationDate -> PublishArticleCommand.validateThenCreate(articleId,
-                        articleRequest.authorId(), publicationDate))
+        return PublishArticleCommand.validateThenCreate(articleId, articleRequest.authorId())
                 .flatMap(this.commandBus::execute)
                 .mapLeft(this.apiErrorHandler::mapErrorToProblemDetail)
                 .fold(
                     failure -> ApiResultUtils.createFailureResponse(failure, URI.create(request.getRequestURI())),
-                        _ -> ApiResultUtils.createSuccessResponse(HttpStatus.NO_CONTENT, null));
+                        _ -> ApiResultUtils.createSuccessResponse(
+                                HttpStatus.ACCEPTED,
+                                null,
+                                URI.create("/api/articles/" + articleId)));
     }
 
     /**
@@ -93,26 +90,6 @@ final class ArticleController implements ArticleApi {
                     failure -> ApiResultUtils.createFailureResponse(failure, URI.create(request.getRequestURI())),
                         success -> ApiResultUtils.createSuccessResponse(HttpStatus.OK,
                                 ApiMapper.INSTANCE.toArticleResponse(success)));
-    }
-
-    /**
-     * Parses the raw publication date into an {@link Instant}, translating any parse failure into a
-     * validation error so that the functional pipeline can stay on the {@link Either} rails.
-     *
-     * @param publicationDate the raw publication date in ISO-8601 instant format
-     * @return {@link Either#right} with the parsed instant, or {@link Either#left} with the validation error
-     */
-    private Either<Error, Instant> parsePublicationDate(final String publicationDate) {
-        if (publicationDate == null || publicationDate.isBlank()) {
-            return Either.left(new Error.ValidationErrors(
-                    List.of(new ValidationError.Mandatory("publicationDate"))));
-        }
-        try {
-            return Either.right(Instant.parse(publicationDate));
-        } catch (final DateTimeParseException ex) {
-            return Either.left(new Error.ValidationErrors(
-                    List.of(new ValidationError.Invalid("publicationDate", publicationDate))));
-        }
     }
 
 }

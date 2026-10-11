@@ -46,7 +46,6 @@ class ArticleControllerTest {
 
     private static final String ARTICLE_ID = UUID.randomUUID().toString();
     private static final String AUTHOR_ID = UUID.randomUUID().toString();
-    private static final String PUBLICATION_DATE = "2026-06-07T10:15:30.00Z";
     private static final String TITLE = "A title";
     private static final String CONTENT = "Some content";
 
@@ -126,18 +125,19 @@ class ArticleControllerTest {
     class PublishMethodTests {
 
         @Test
-        @DisplayName("When publishing an article successfully, then should return NO_CONTENT")
-        void shouldReturnNoContent_whenPublishingArticleSuccessfully() {
-            // Given
-            final var articleRequest = new ApiRequest.PublishArticle(AUTHOR_ID, PUBLICATION_DATE);
+        @DisplayName("When publication is accepted, then should return ACCEPTED with a Location header")
+        void publishShouldReturnAcceptedWhenRequestIsValid() {
+            //given
+            final var articleRequest = new ApiRequest.PublishArticle(AUTHOR_ID);
             given(commandBus.<Error, PublishArticleCommand>execute(any(PublishArticleCommand.class)))
                     .willReturn(Either.right(null));
 
-            // When
+            //when
             final ResponseEntity<?> response = controller.publish(ARTICLE_ID, articleRequest, mockRequest);
 
-            // Then
-            then(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+            //then
+            then(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+            then(response.getHeaders().getLocation()).hasToString("/api/articles/" + ARTICLE_ID);
             then(response.getBody()).isNull();
             verify(commandBus).execute(any(PublishArticleCommand.class));
         }
@@ -146,7 +146,7 @@ class ArticleControllerTest {
         @DisplayName("When the command bus fails, then should return the mapped error response")
         void shouldReturnErrorResponse_whenCommandBusFails() {
             // Given
-            final var articleRequest = new ApiRequest.PublishArticle(AUTHOR_ID, PUBLICATION_DATE);
+            final var articleRequest = new ApiRequest.PublishArticle(AUTHOR_ID);
             final Error error = new Error.BusinessError.ArticleAlreadyPublished(ARTICLE_ID);
             given(commandBus.<Error, PublishArticleCommand>execute(any(PublishArticleCommand.class)))
                     .willReturn(Either.left(error));
@@ -166,23 +166,6 @@ class ArticleControllerTest {
             verify(apiErrorHandler).mapErrorToProblemDetail(eq(error));
         }
 
-        @Test
-        @DisplayName("When the publication date is malformed, then should return BAD_REQUEST without touching the bus")
-        void shouldReturnBadRequest_whenPublicationDateIsMalformed() {
-            // Given
-            final var articleRequest = new ApiRequest.PublishArticle(AUTHOR_ID, "not-a-date");
-            final List<ProblemDetail> problemDetails =
-                    List.of(ProblemDetail.forStatus(HttpStatus.BAD_REQUEST.value()));
-            given(apiErrorHandler.mapErrorToProblemDetail(any(Error.class)))
-                    .willReturn(problemDetails);
-
-            // When
-            final ResponseEntity<?> response = controller.publish(ARTICLE_ID, articleRequest, mockRequest);
-
-            // Then
-            then(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-            verifyNoInteractions(commandBus);
-        }
     }
 
     @Nested
@@ -206,6 +189,23 @@ class ArticleControllerTest {
             then(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             then(response.getBody()).isInstanceOf(ApiResponse.Article.class);
             then(response.getBody()).isEqualTo(expected);
+            verify(queryBus).query(any(GetArticleByIdQuery.class));
+        }
+
+        @Test
+        @DisplayName("When finding an article being published, then should return PUBLISHING")
+        void shouldReturnPublishingStatus_whenPublicationHasStarted() {
+            //given
+            final var dto = new ArticleDTO(ARTICLE_ID, TITLE, AUTHOR_ID, "PUBLISHING");
+            given(queryBus.<Error, ArticleDTO, GetArticleByIdQuery>query(any(GetArticleByIdQuery.class)))
+                    .willReturn(Either.right(dto));
+
+            //when
+            final ResponseEntity<?> response = controller.find(ARTICLE_ID, mockRequest);
+
+            //then
+            then(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            then(response.getBody()).isEqualTo(new ApiResponse.Article(ARTICLE_ID, TITLE, AUTHOR_ID, "PUBLISHING"));
             verify(queryBus).query(any(GetArticleByIdQuery.class));
         }
 
