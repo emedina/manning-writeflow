@@ -45,7 +45,7 @@ class PublishArticleHandler implements PublishArticleUseCase {
             .flatMap(articleId -> AuthorId.validateThenCreate(command.authorId())
                 .flatMap(authorId -> this.articleRepository.readById(articleId)
                     .flatMap(article -> article.startPublication(authorId)
-                        .flatMap(startedArticle -> this.articleRepository.save(startedArticle))
+                        .flatMap(this.articleRepository::save)
                         .flatMap(_ -> this.domainEventPublisher.publish(article.popDomainEvents()))
                     )
                 )

@@ -1,4 +1,8 @@
 Class com.manning.writeflow.application.ports.in.CreateArticleUseCase has a generic type Error at position 1 that is not assignable to Command
+Class com.manning.writeflow.application.ports.in.ConfirmPublicationUseCase has a generic type Error at position 1 that is not assignable to Command
+Class com.manning.writeflow.application.ports.in.DistributeArticleUseCase has a generic type Error at position 1 that is not assignable to Command
+Class com.manning.writeflow.application.ports.in.RevertPublicationUseCase has a generic type Error at position 1 that is not assignable to Command
+Class com.manning.writeflow.application.ports.in.WithdrawArticleUseCase has a generic type Error at position 1 that is not assignable to Command
 Class com.manning.writeflow.application.ports.in.NotifySubscribersUseCase has a generic type Error at position 1 that is not assignable to Command
 Class com.manning.writeflow.application.ports.in.PublishArticleUseCase has a generic type Error at position 1 that is not assignable to Command
 Class com.manning.writeflow.application.ports.in.RecordIntegrationEventUseCase has a generic type Error at position 1 that is not assignable to Command
