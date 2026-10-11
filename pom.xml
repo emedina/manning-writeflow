@@ -30,6 +30,7 @@
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
         <springdoc.version>3.0.3</springdoc.version>
         <slf4j.version>2.0.17</slf4j.version>
+        <temporal.version>1.40.0</temporal.version>
 
         <!-- External Architecture Kernel -->
         <shared-kernel.version>1.0.0</shared-kernel.version>
@@ -53,6 +54,7 @@
         <module>event-listener-adapter</module>
         <module>notification-adapter</module>
         <module>distribution-platform-adapter</module>
+        <module>workflow-input-adapter</module>
         <module>spring-boot-assembly</module>
     </modules>
 

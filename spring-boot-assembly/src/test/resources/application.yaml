@@ -112,3 +112,4 @@ hexagonal:
         - com.manning.writeflow.events..
         - com.manning.writeflow.external..
         - com.manning.writeflow.external.distribution..
+        - com.manning.writeflow.workflow..

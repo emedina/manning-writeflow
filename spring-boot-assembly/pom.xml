@@ -87,6 +87,11 @@
         </dependency>
         <dependency>
             <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-workflow-input-adapter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
             <artifactId>writeflow-application-core-application</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -106,6 +111,21 @@
             <groupId>io.github.emedina</groupId>
             <artifactId>transactional-either-spring-boot</artifactId>
             <version>${transactional-either-spring-boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.temporal</groupId>
+            <artifactId>temporal-spring-boot-starter</artifactId>
+            <version>${temporal.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.temporal</groupId>
+                    <artifactId>temporal-testing</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

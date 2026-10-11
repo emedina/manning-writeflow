@@ -3,6 +3,16 @@ spring:
   application:
     name: writeflow
 
+  temporal:
+    start-workers: false
+    connection:
+      target: ${TEMPORAL_TARGET:localhost:7233}
+    workers-auto-discovery:
+      packages:
+        - com.manning.writeflow.workflow
+    workers:
+      - task-queue: publication
+
   threads:
     virtual:
       enabled: true
