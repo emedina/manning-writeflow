@@ -42,10 +42,10 @@ public final class TemporalWorkflowConfiguration {
             final io.temporal.common.metadata.POJOWorkflowMethodMetadata workflowMethodMetadata) -> {
                 if (workflowImplementationClass == PublicationWorkflowImpl.class) {
                     return options.setActivityOptions(Map.of(
-                        "distributeArticle", distributionOptions,
-                        "confirmPublication", attemptOptions,
-                        "revertPublication", attemptOptions,
-                        "withdrawArticle", attemptOptions));
+                        "DistributeArticle", distributionOptions,
+                        "ConfirmPublication", attemptOptions,
+                        "RevertPublication", attemptOptions,
+                        "WithdrawArticle", attemptOptions));
                 }
                 return options;
             };

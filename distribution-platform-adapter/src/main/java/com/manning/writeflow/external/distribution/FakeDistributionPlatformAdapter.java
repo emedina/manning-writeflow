@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -21,8 +22,11 @@ import java.util.concurrent.atomic.AtomicReference;
 @Adapter
 final class FakeDistributionPlatformAdapter implements DistributionPlatformOutputPort {
 
+    private static final String REJECT_NEXT_PROPERTY = "writeflow.fake-distribution.reject-next";
+
     private final Set<String> distributedArticleIds = ConcurrentHashMap.newKeySet();
     private final AtomicReference<Error> nextFailure = new AtomicReference<>();
+    private final AtomicBoolean rejectNextDistribution = new AtomicBoolean(Boolean.getBoolean(REJECT_NEXT_PROPERTY));
 
     /**
      * Configures the next distribution call to return the supplied failure.
@@ -39,7 +43,7 @@ final class FakeDistributionPlatformAdapter implements DistributionPlatformOutpu
 
     @Override
     public Either<Error, Void> distribute(final ArticleForDistributionDTO article) {
-        final Error failure = this.nextFailure.getAndSet(null);
+        final Error failure = this.nextFailureFor(article);
         if (Objects.nonNull(failure)) {
             log.info("Distribution Platform rejected article {}", article.id());
             return Either.left(failure);
@@ -48,6 +52,16 @@ final class FakeDistributionPlatformAdapter implements DistributionPlatformOutpu
         this.distributedArticleIds.add(article.id());
         log.info("Pretend Distribution Platform accepted article {}", article.id());
         return Either.right(null);
+    }
+
+    private Error nextFailureFor(final ArticleForDistributionDTO article) {
+        final Error failure = this.nextFailure.getAndSet(null);
+        if (Objects.nonNull(failure)) {
+            return failure;
+        }
+        return this.rejectNextDistribution.compareAndSet(true, false)
+            ? new Error.BusinessError.DistributionRejected(article.id(), "Rejected by demo configuration")
+            : null;
     }
 
     @Override

@@ -47,17 +47,17 @@ class TemporalWorkflowConfigurationTest {
 
         //then
         final Map<String, ActivityOptions> activityOptions = options.getActivityOptions();
-        final ActivityOptions distribution = activityOptions.get("distributeArticle");
+        final ActivityOptions distribution = activityOptions.get("DistributeArticle");
         then(activityOptions).containsOnlyKeys(
-            "distributeArticle", "confirmPublication", "revertPublication", "withdrawArticle");
+            "DistributeArticle", "ConfirmPublication", "RevertPublication", "WithdrawArticle");
         then(distribution.getScheduleToCloseTimeout()).isEqualTo(distributionDeadline);
         then(distribution.getStartToCloseTimeout()).isEqualTo(Duration.ofMinutes(1));
         then(distribution.getRetryOptions().getInitialInterval()).isEqualTo(Duration.ofSeconds(1));
         then(distribution.getRetryOptions().getBackoffCoefficient()).isEqualTo(2.0);
         then(distribution.getRetryOptions().getMaximumAttempts()).isZero();
-        then(activityOptions.get("confirmPublication").getScheduleToCloseTimeout()).isNull();
-        then(activityOptions.get("revertPublication").getScheduleToCloseTimeout()).isNull();
-        then(activityOptions.get("withdrawArticle").getScheduleToCloseTimeout()).isNull();
+        then(activityOptions.get("ConfirmPublication").getScheduleToCloseTimeout()).isNull();
+        then(activityOptions.get("RevertPublication").getScheduleToCloseTimeout()).isNull();
+        then(activityOptions.get("WithdrawArticle").getScheduleToCloseTimeout()).isNull();
         then(activityOptions.values())
             .allSatisfy((final ActivityOptions activity) ->
                 then(activity.getStartToCloseTimeout()).isEqualTo(Duration.ofMinutes(1)));

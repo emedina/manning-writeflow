@@ -2,6 +2,7 @@ package com.manning.writeflow;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Main bootstrap class for the WriteFlow Spring Boot application.
@@ -11,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication(
     proxyBeanMethods = false, scanBasePackages = { "com.manning.writeflow", "com.emedina.transactional" }
 )
+@EnableScheduling
 public class Application {
 
     public static void main(final String[] args) {

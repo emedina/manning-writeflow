@@ -44,11 +44,17 @@ survive a crash, and two compensations that must run in order. That is the engin
 ## What moves to the engine
 
 The order of the steps, the retry policy per activity, the deadline on the remote step, and the guarantee that
-compensations run in reverse order after any failure, including a worker crash. The workflow is a script of activity
-calls with no business data and no business conditionals. Each activity builds a command, dispatches it through the
-command bus and classifies the `Either` it gets back: business errors become non-retryable failures, technical errors
-are retried. That makes the activities a driving adapter, the same kind of component as the REST controller and the
-Spring event listeners.
+compensations run in reverse order after a failure, including a worker crash. In this Publication, the workflow registers
+`revertPublication` first and `withdrawArticle` second. Temporal's Saga runs them in LIFO order: `withdrawArticle`, then
+`revertPublication`. It undoes the Distribution Platform effect before returning the local Article to `Draft`.
+
+The workflow registers `withdrawArticle` before attempting `distributeArticle`. A timed-out attempt may have reached the
+Distribution Platform even when the workflow did not receive its result. Withdrawal is safe if distribution never
+happened, so the same compensation sequence covers both a rejected distribution and an uncertain outcome. The workflow
+is a script of activity calls with no business data and no business conditionals. Each activity builds a command,
+dispatches it through the command bus and classifies the `Either` it gets back: business errors become non-retryable
+failures, technical errors are retried. That makes the activities a driving adapter, the same kind of component as the
+REST controller and the Spring event listeners.
 
 ## Consequences
 

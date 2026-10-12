@@ -3,9 +3,11 @@ package com.manning.writeflow.assembly;
 import com.emedina.sharedkernel.application.annotation.Adapter;
 import com.emedina.sharedkernel.application.annotation.ApplicationService;
 import com.emedina.sharedkernel.domain.service.annotation.DomainService;
+import com.manning.writeflow.outboxrelay.OutboxRelayScheduling;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -32,6 +34,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         classes = { ApplicationService.class, Adapter.class, DomainService.class }
     )
 )
+@Import(OutboxRelayScheduling.class)
 class ApplicationAssembler {
 
 }

@@ -55,6 +55,7 @@
         <module>notification-adapter</module>
         <module>distribution-platform-adapter</module>
         <module>workflow-input-adapter</module>
+        <module>outbox-relay</module>
         <module>spring-boot-assembly</module>
     </modules>
 

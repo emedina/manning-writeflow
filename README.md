@@ -16,9 +16,9 @@ WriteFlow models the lifecycle of an article through three use cases:
 | `POST /api/articles/{id}/publication` | Start publication for a draft | `202 Accepted` + `Location`; article status `PUBLISHING` |
 | `GET /api/articles/{id}` | Retrieve an article | `200 OK` + article representation |
 
-The publication request commits the Article in `PUBLISHING` and raises `PublicationStarted`. This step has no workflow to
-advance the Article, so it remains in that state. When a later step confirms publication, `ArticlePublished` is recorded
-through the transactional outbox and the notification listener runs after commit.
+The publication request commits the Article in `PUBLISHING` and writes `PublicationStarted` to the outbox. The relay
+starts the Temporal workflow; confirmation records `ArticlePublished` through the outbox and notifies subscribers after
+commit.
 
 ---
 
@@ -79,6 +79,8 @@ WriteFlow is a multi-module Maven project. Each module maps to a ring of the hex
 | `event-listener-adapter` | Driven | Transaction-phase listeners (`BEFORE_COMMIT` outbox, `AFTER_COMMIT` notify) |
 | `notification-adapter` | Driven | Fake notification stand-in (swappable for a real email gateway) |
 | `spring-boot-assembly` | Composition root | Bootstraps Spring, wires beans by stereotype, stands up the buses, and **owns the architecture-test suite** |
+| `workflow-input-adapter` | Driving | Runs Publication activities through the command bus and Temporal |
+| `outbox-relay` | Outside the rings | Polls the outbox and starts workflows or logs broker handoffs |
 
 ---
 
@@ -107,7 +109,7 @@ WriteFlow is a multi-module Maven project. Each module maps to a ring of the hex
 # Build, run all unit tests, and execute the full ArchUnit verification suite
 mvn clean verify
 
-# Start the application (H2 in-memory, port 8086)
+# Start the application (H2 file database, port 8086)
 mvn -pl spring-boot-assembly spring-boot:run
 ```
 
@@ -124,11 +126,47 @@ curl -i -X POST http://localhost:8086/api/articles/{id}/publication \
   -H 'Content-Type: application/json' \
   -d '{"authorId":"22222222-2222-2222-2222-222222222222"}'
 
-# 3. Retrieve it (returns 200 with status PUBLISHING; no workflow advances it yet)
+# 3. Retrieve it (returns 200; status advances to PUBLISHED after the workflow completes)
 curl -i http://localhost:8086/api/articles/{id}
 ```
 
 OpenAPI / Swagger UI is available via springdoc once the application is running.
+
+### Running Part 2
+
+Start the local Temporal development server and UI. Before publishing, register the Article search attribute in the
+Temporal namespace. The dev server keeps its state in memory, so repeat the registration after restarting it. Run
+WriteFlow in another terminal:
+
+```bash
+docker compose up -d
+```
+
+Wait for the Temporal UI at <http://localhost:8233> to load, then register the search attribute and start WriteFlow:
+
+```bash
+temporal operator search-attribute create --name ArticleId --type Keyword
+mvn -pl spring-boot-assembly spring-boot:run
+```
+
+The application listens on port 8086. The outbox relay polls every second by default. Use the create and publish requests
+above, then GET the Article to see `PUBLISHED`. To reject the first Distribution Platform request, start the application with
+`JAVA_TOOL_OPTIONS=-Dwriteflow.fake-distribution.reject-next=true`; publish one Article and GET it after the workflow
+compensates it back to `DRAFT`. The property is read once when the adapter starts and affects one distribution attempt.
+To show engine unavailability, stop Temporal with
+`docker compose stop temporal`, submit a publication, and inspect the H2 console at `/h2-console` (JDBC URL
+`jdbc:h2:file:./data/writeflowdb`): the POST still returns 202 and the `PublicationStarted` row remains pending.
+Then restart Temporal with `docker compose start temporal`, register `ArticleId` again with the command above, and wait
+for the relay to start the workflow. The file database preserves Article and outbox state across application restarts.
+
+### Beyond the rings
+
+`workflow-input-adapter` drives the hexagon through its use cases. The outbox relay owns no port and depends on neither
+the application nor the workflow module. It is an external process concern assembled alongside the hexagon. The design
+decisions are recorded in [ADR-0001](docs/adr/0001-orchestrate-publication-with-temporal.md),
+[ADR-0002](docs/adr/0002-trigger-the-workflow-through-the-outbox.md),
+[ADR-0003](docs/adr/0003-idempotent-step-transitions-and-optimistic-locking.md), and
+[ADR-0004](docs/adr/0004-facts-are-emitted-by-the-hexagon-not-by-the-workflow.md).
 
 ---
 

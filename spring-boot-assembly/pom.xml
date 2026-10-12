@@ -92,6 +92,11 @@
         </dependency>
         <dependency>
             <groupId>com.manning.writeflow</groupId>
+            <artifactId>writeflow-outbox-relay</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.manning.writeflow</groupId>
             <artifactId>writeflow-application-core-application</artifactId>
             <version>${project.version}</version>
         </dependency>

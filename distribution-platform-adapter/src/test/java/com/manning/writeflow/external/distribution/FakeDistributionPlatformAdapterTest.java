@@ -53,6 +53,25 @@ class FakeDistributionPlatformAdapterTest {
     }
 
     @Test
+    @DisplayName("distribute should reject once when the demo property is enabled")
+    void distributeShouldRejectOnceWhenDemoPropertyIsEnabled() {
+        //given
+        final String property = "writeflow.fake-distribution.reject-next";
+        System.setProperty(property, "true");
+        final FakeDistributionPlatformAdapter adapter = new FakeDistributionPlatformAdapter();
+        System.clearProperty(property);
+
+        //when
+        final Either<Error, Void> rejected = adapter.distribute(ARTICLE);
+        final Either<Error, Void> accepted = adapter.distribute(ARTICLE);
+
+        //then
+        then(rejected.isLeft()).isTrue();
+        then(accepted.isRight()).isTrue();
+        then(adapter.hasDistributed(ARTICLE.id())).isTrue();
+    }
+
+    @Test
     @DisplayName("withdraw should succeed when the article was never distributed")
     void withdrawShouldSucceedWhenArticleWasNeverDistributed() {
         //given

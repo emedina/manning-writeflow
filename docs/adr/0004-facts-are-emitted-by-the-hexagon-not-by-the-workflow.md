@@ -47,7 +47,10 @@ so no second row is written and no consumer sees the fact twice.
 - Data produced by an earlier step that a consumer needs, such as the platform's distribution reference, flows forward
   through the hexagon: the activity returns it, the workflow passes the id, the confirming command carries it, the
   aggregate records it, the fact carries it. The reference application does not add that field; the path is the point.
-- Compensation for the remote step is registered before the step is called, following Temporal's own saga sample, so a
-  distribution whose completion was lost is still withdrawn. Timeouts never trigger compensation of the confirming step:
-  the overall deadline exists only on `distribute`; `confirm` and the compensations retry without an attempt limit, so
-  a timed-out attempt re-runs and meets the idempotent transition.
+- The workflow registers compensations in forward-dependency order: `revertPublication`, then `withdrawArticle`.
+  Temporal's Saga executes them in reverse order, so a failure withdraws from the Distribution Platform before returning
+  the Article to `Draft`. `withdrawArticle` is registered before `distribute` because a timed-out attempt may have
+  succeeded without its result reaching the workflow. It must also succeed when the Article was never distributed.
+- Timeouts never trigger compensation of the confirming step: the overall deadline exists only on `distribute`;
+  `confirm` and the compensations retry without an attempt limit, so a timed-out attempt re-runs and meets the idempotent
+  transition.

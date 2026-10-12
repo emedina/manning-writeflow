@@ -1,4 +1,6 @@
 # Project exclude paths
+/data/
+/outbox-relay/target/
 /application-core/application/target/
 /application-core/domain/target/
 /application-core/input-ports/target/

@@ -18,9 +18,10 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 class TemporalArchitectureTest {
 
     private static final String WORKFLOW_ADAPTER_PACKAGE = "com.manning.writeflow.workflow..";
+    private static final String OUTBOX_RELAY_PACKAGE = "com.manning.writeflow.outboxrelay..";
 
     @Test
-    @DisplayName("Temporal SDK imports should stay in the workflow adapter")
+    @DisplayName("Temporal SDK imports should stay in workflow boundary modules")
     void temporalImportsShouldStayInTheWorkflowAdapter() {
         //given
         final JavaClasses importedClasses = new ClassFileImporter()
@@ -30,6 +31,7 @@ class TemporalArchitectureTest {
         //when
         final ArchRule rule = noClasses()
             .that().resideOutsideOfPackage(WORKFLOW_ADAPTER_PACKAGE)
+            .and().resideOutsideOfPackage(OUTBOX_RELAY_PACKAGE)
             .should().dependOnClassesThat().resideInAnyPackage("io.temporal..");
 
         //then
